@@ -24,5 +24,9 @@ fn main() {
     let mut event_loop = EventLoop::new().unwrap();
     event_loop.register(&server, SERVER).unwrap();
 
+    let watcher_addr = "127.0.0.1:2300".parse().unwrap();
+    let watcher_server = tcp::listen(&watcher_addr).unwrap();
+    event_loop.register(&watcher_server, SERVER).unwrap();
+
     event_loop.run(&mut Termcastd(server)).unwrap();
 }
