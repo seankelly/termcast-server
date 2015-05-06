@@ -1,0 +1,7 @@
+[package]
+name = "termcastd"
+version = "0.1.0"
+authors = ["Sean Kelly <code@katron.org>"]
+
+[dependencies]
+mio = "0.3.0"
