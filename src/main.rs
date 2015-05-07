@@ -8,7 +8,11 @@ const CASTER: Token = Token(0);
 const WATCHER: Token = Token(1);
 
 
-struct Termcastd (NonBlock<TcpListener>);
+struct Termcastd {
+    listen_caster: NonBlock<TcpListener>,
+    listen_watcher: NonBlock<TcpListener>,
+    casters: Vec<NonBlock<TcpListener>>,
+}
 
 
 impl Handler for Termcastd {
@@ -18,15 +22,20 @@ impl Handler for Termcastd {
 
 
 fn main() {
-    let addr = "127.0.0.1:31337".parse().unwrap();
-    let server = tcp::listen(&addr).unwrap();
-
-    let mut event_loop = EventLoop::new().unwrap();
-    event_loop.register(&server, CASTER).unwrap();
+    let caster_addr = "127.0.0.1:31337".parse().unwrap();
+    let listen_caster = tcp::listen(&caster_addr).unwrap();
 
     let watcher_addr = "127.0.0.1:2300".parse().unwrap();
-    let watcher_server = tcp::listen(&watcher_addr).unwrap();
-    event_loop.register(&watcher_server, WATCHER).unwrap();
+    let listen_watcher = tcp::listen(&watcher_addr).unwrap();
 
-    event_loop.run(&mut Termcastd(server)).unwrap();
+    let mut event_loop = EventLoop::new().unwrap();
+    event_loop.register(&listen_caster, CASTER).unwrap();
+    event_loop.register(&listen_watcher, WATCHER).unwrap();
+
+    let mut termcastd = Termcastd {
+        listen_caster: listen_caster,
+        listen_watcher: listen_watcher,
+        casters: Vec::new(),
+    };
+    event_loop.run(&mut termcastd).unwrap();
 }
