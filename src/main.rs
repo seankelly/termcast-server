@@ -18,6 +18,7 @@ struct Termcastd {
     listen_watcher: NonBlock<TcpListener>,
     casters: Vec<NonBlock<TcpStream>>,
     watchers: Vec<Watcher>,
+    token_id: usize,
 }
 
 
@@ -36,6 +37,10 @@ impl Handler for Termcastd {
                             sock: sock,
                         };
                         self.watchers.push(watcher);
+                        let idx = self.watchers.len() - 1;
+                        let token = Token(self.token_id);
+                        self.token_id += 1;
+                        event_loop.register(&self.watchers[idx].sock, token);
                     }
                 }
                 else {
@@ -63,6 +68,7 @@ fn main() {
         listen_watcher: listen_watcher,
         casters: Vec::new(),
         watchers: Vec::new(),
+        token_id: 2,
     };
     event_loop.run(&mut termcastd).unwrap();
 }
