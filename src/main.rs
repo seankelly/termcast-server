@@ -11,7 +11,7 @@ const WATCHER: Token = Token(1);
 struct Termcastd {
     listen_caster: NonBlock<TcpListener>,
     listen_watcher: NonBlock<TcpListener>,
-    casters: Vec<NonBlock<TcpListener>>,
+    casters: Vec<NonBlock<TcpStream>>,
 }
 
 
