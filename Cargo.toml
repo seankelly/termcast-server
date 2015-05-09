@@ -4,4 +4,5 @@ version = "0.1.0"
 authors = ["Sean Kelly <code@katron.org>"]
 
 [dependencies]
+log = "0.3.0"
 mio = "0.3.0"

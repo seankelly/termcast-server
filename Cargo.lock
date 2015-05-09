@@ -2,6 +2,7 @@
 name = "termcastd"
 version = "0.1.0"
 dependencies = [
+ "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mio 0.3.4 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

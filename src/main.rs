@@ -1,4 +1,6 @@
 extern crate mio;
+#[macro_use]
+extern crate log;
 
 use mio::*;
 use mio::tcp::TcpListener;
