@@ -26,8 +26,11 @@ struct Termcastd {
 
 impl Termcastd {
     fn caster_menu(&mut self, watcher: &mut Watcher) {
-        let mut menu = "Hello, World\n".as_bytes();
-        watcher.sock.write_slice(&menu);
+        let menu_header = format!(
+            "{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n",
+            "", 0, 0);
+        let menu_header_bytes = menu_header.as_bytes();
+        watcher.sock.write_slice(&menu_header_bytes);
     }
 }
 
