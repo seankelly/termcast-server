@@ -21,6 +21,8 @@ struct Termcastd {
     casters: Vec<NonBlock<TcpStream>>,
     watchers: Vec<Watcher>,
     next_token_id: usize,
+    number_watching: u32,
+    number_casting: u32,
 }
 
 
@@ -28,7 +30,7 @@ impl Termcastd {
     fn caster_menu(&mut self, watcher: &mut Watcher) {
         let menu_header = format!(
             "{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n",
-            "", 0, 0);
+            "", self.number_casting, self.number_watching);
         let menu_header_bytes = menu_header.as_bytes();
         watcher.sock.write_slice(&menu_header_bytes);
     }
@@ -48,6 +50,7 @@ impl Handler for Termcastd {
                         let mut watcher = Watcher {
                             sock: sock,
                         };
+                        self.number_watching += 1;
                         self.caster_menu(&mut watcher);
                         self.watchers.push(watcher);
                         let idx = self.watchers.len() - 1;
@@ -82,6 +85,8 @@ fn main() {
         casters: Vec::new(),
         watchers: Vec::new(),
         next_token_id: 2,
+        number_watching: 0,
+        number_casting: 0,
     };
     event_loop.run(&mut termcastd).unwrap();
 }
