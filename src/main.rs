@@ -24,6 +24,13 @@ struct Termcastd {
 }
 
 
+impl Termcastd {
+    fn caster_menu(&mut self, watcher: &mut Watcher) {
+        let mut menu = "Hello, World\n".as_bytes();
+        watcher.sock.write_slice(&menu);
+    }
+}
+
 impl Handler for Termcastd {
     type Timeout = ();
     type Message = ();
@@ -35,9 +42,10 @@ impl Handler for Termcastd {
             WATCHER => {
                 if let Ok(opt) = self.listen_watcher.accept() {
                     if let Some(sock) = opt {
-                        let watcher = Watcher {
+                        let mut watcher = Watcher {
                             sock: sock,
                         };
+                        self.caster_menu(&mut watcher);
                         self.watchers.push(watcher);
                         let idx = self.watchers.len() - 1;
                         let token = Token(self.token_id);
