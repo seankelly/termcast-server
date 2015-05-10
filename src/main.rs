@@ -72,7 +72,12 @@ impl Handler for Termcastd {
                         self.casters.push(caster);
                         let idx = self.casters.len() - 1;
                         let token = self.next_token();
-                        event_loop.register(&self.casters[idx].sock, token);
+                        let res = event_loop.register_opt(
+                            &self.casters[idx].sock,
+                            token,
+                            Interest::all(),
+                            PollOpt::edge(),
+                            );
                     }
                 }
                 else {
@@ -89,7 +94,12 @@ impl Handler for Termcastd {
                         self.watchers.push(watcher);
                         let idx = self.watchers.len() - 1;
                         let token = self.next_token();
-                        event_loop.register(&self.watchers[idx].sock, token);
+                        let res = event_loop.register_opt(
+                            &self.watchers[idx].sock,
+                            token,
+                            Interest::all(),
+                            PollOpt::edge(),
+                            );
                     }
                 }
                 else {
