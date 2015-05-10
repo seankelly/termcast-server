@@ -5,12 +5,18 @@ extern crate log;
 use mio::*;
 use mio::tcp::TcpListener;
 use mio::tcp::TcpStream;
+use std::collections::HashMap;
 use std::rc::Rc;
 
 
 const CASTER: Token = Token(0);
 const WATCHER: Token = Token(1);
 
+
+enum Client {
+    Watcher(Watcher),
+    Caster(Caster),
+}
 
 struct Caster {
     sock: NonBlock<TcpStream>,
@@ -24,6 +30,7 @@ struct Watcher {
 struct Termcastd {
     listen_caster: NonBlock<TcpListener>,
     listen_watcher: NonBlock<TcpListener>,
+    clients: HashMap<Token, Client>,
     casters: Vec<Caster>,
     watchers: Vec<Watcher>,
     next_token_id: usize,
@@ -104,6 +111,7 @@ fn main() {
     let mut termcastd = Termcastd {
         listen_caster: listen_caster,
         listen_watcher: listen_watcher,
+        clients: HashMap::new(),
         casters: Vec::new(),
         watchers: Vec::new(),
         next_token_id: 2,
