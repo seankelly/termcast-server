@@ -47,6 +47,12 @@ impl Termcastd {
         let menu_header_bytes = menu_header.as_bytes();
         let res = watcher.sock.write_slice(&menu_header_bytes);
     }
+
+    fn next_token(&mut self) -> Token {
+        let token = Token(self.next_token_id);
+        self.next_token_id += 1;
+        return token;
+    }
 }
 
 impl Handler for Termcastd {
@@ -65,8 +71,7 @@ impl Handler for Termcastd {
                         self.number_casting += 1;
                         self.casters.push(caster);
                         let idx = self.casters.len() - 1;
-                        let token = Token(self.next_token_id);
-                        self.next_token_id += 1;
+                        let token = self.next_token();
                         event_loop.register(&self.casters[idx].sock, token);
                     }
                 }
@@ -83,8 +88,7 @@ impl Handler for Termcastd {
                         self.caster_menu(&mut watcher);
                         self.watchers.push(watcher);
                         let idx = self.watchers.len() - 1;
-                        let token = Token(self.next_token_id);
-                        self.next_token_id += 1;
+                        let token = self.next_token();
                         event_loop.register(&self.watchers[idx].sock, token);
                     }
                 }
