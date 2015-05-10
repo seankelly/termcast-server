@@ -5,11 +5,17 @@ extern crate log;
 use mio::*;
 use mio::tcp::TcpListener;
 use mio::tcp::TcpStream;
+use std::rc::Rc;
 
 
 const CASTER: Token = Token(0);
 const WATCHER: Token = Token(1);
 
+
+struct Caster {
+    sock: NonBlock<TcpStream>,
+    watchers: Vec<Rc<Watcher>>,
+}
 
 struct Watcher {
     sock: NonBlock<TcpStream>,
@@ -18,7 +24,7 @@ struct Watcher {
 struct Termcastd {
     listen_caster: NonBlock<TcpListener>,
     listen_watcher: NonBlock<TcpListener>,
-    casters: Vec<NonBlock<TcpStream>>,
+    casters: Vec<Caster>,
     watchers: Vec<Watcher>,
     next_token_id: usize,
     number_watching: u32,
@@ -43,6 +49,22 @@ impl Handler for Termcastd {
     fn readable(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token, hint: ReadHint) {
         match token {
             CASTER => {
+                if let Ok(opt) = self.listen_caster.accept() {
+                    if let Some(sock) = opt {
+                        let mut caster = Caster {
+                            sock: sock,
+                            watchers: Vec::new(),
+                        };
+                        self.number_casting += 1;
+                        self.casters.push(caster);
+                        let idx = self.casters.len() - 1;
+                        let token = Token(self.next_token_id);
+                        self.next_token_id += 1;
+                        event_loop.register(&self.casters[idx].sock, token);
+                    }
+                }
+                else {
+                }
             },
             WATCHER => {
                 if let Ok(opt) = self.listen_watcher.accept() {
