@@ -45,7 +45,7 @@ impl Termcastd {
             "{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n",
             "", self.number_casting, self.number_watching);
         let menu_header_bytes = menu_header.as_bytes();
-        watcher.sock.write_slice(&menu_header_bytes);
+        let res = watcher.sock.write_slice(&menu_header_bytes);
     }
 }
 
