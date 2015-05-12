@@ -12,12 +12,6 @@ use std::rc::Rc;
 const CASTER: Token = Token(0);
 const WATCHER: Token = Token(1);
 
-
-enum Client {
-    Watcher(Watcher),
-    Caster(Caster),
-}
-
 struct Caster {
     sock: NonBlock<TcpStream>,
     watchers: Vec<Rc<Watcher>>,
@@ -31,11 +25,15 @@ struct Termcastd {
     listen_caster: NonBlock<TcpListener>,
     listen_watcher: NonBlock<TcpListener>,
     clients: HashMap<Token, Client>,
-    casters: Vec<Caster>,
-    watchers: Vec<Watcher>,
     next_token_id: usize,
     number_watching: u32,
     number_casting: u32,
+}
+
+
+enum Client {
+    Watching(Watcher),
+    Casting(Caster),
 }
 
 
@@ -69,15 +67,15 @@ impl Handler for Termcastd {
                             watchers: Vec::new(),
                         };
                         self.number_casting += 1;
-                        self.casters.push(caster);
-                        let idx = self.casters.len() - 1;
                         let token = self.next_token();
                         let res = event_loop.register_opt(
-                            &self.casters[idx].sock,
+                            &caster.sock,
                             token,
                             Interest::all(),
                             PollOpt::edge(),
-                            );
+                        );
+                        let client = Client::Casting(caster);
+                        self.clients.insert(token, client);
                     }
                 }
                 else {
@@ -91,15 +89,15 @@ impl Handler for Termcastd {
                         };
                         self.number_watching += 1;
                         self.caster_menu(&mut watcher);
-                        self.watchers.push(watcher);
-                        let idx = self.watchers.len() - 1;
                         let token = self.next_token();
                         let res = event_loop.register_opt(
-                            &self.watchers[idx].sock,
+                            &watcher.sock,
                             token,
                             Interest::all(),
                             PollOpt::edge(),
-                            );
+                        );
+                        let client = Client::Watching(watcher);
+                        self.clients.insert(token, client);
                     }
                 }
                 else {
@@ -126,8 +124,6 @@ fn main() {
         listen_caster: listen_caster,
         listen_watcher: listen_watcher,
         clients: HashMap::new(),
-        casters: Vec::new(),
-        watchers: Vec::new(),
         next_token_id: 2,
         number_watching: 0,
         number_casting: 0,
