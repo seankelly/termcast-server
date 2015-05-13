@@ -103,7 +103,14 @@ impl Handler for Termcastd {
                 else {
                 }
             },
-            _ => {},
+            _ => {
+                match (hint.is_data(), hint.is_hup(), hint.is_error()) {
+                    (true, false, false) => {},
+                    (_, true, false) => {},
+                    (_, _, true) => {},
+                    (false, false, false) => {},
+                };
+            },
         }
     }
 }
