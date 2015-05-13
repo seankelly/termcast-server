@@ -32,8 +32,8 @@ struct Termcastd {
 
 
 enum Client {
-    Watching(Watcher),
     Casting(Caster),
+    Watching(Watcher),
 }
 
 
