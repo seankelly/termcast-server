@@ -6,6 +6,7 @@ use mio::*;
 use mio::tcp::TcpListener;
 use mio::tcp::TcpStream;
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 use std::rc::Rc;
 
 
@@ -50,6 +51,25 @@ impl Termcastd {
         let token = Token(self.next_token_id);
         self.next_token_id += 1;
         return token;
+    }
+
+    fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        if let Entry::Occupied(client) = self.clients.entry(token) {
+            match client.get() {
+                &Client::Casting(ref caster) => {
+                    event_loop.deregister(&caster.sock);
+                    self.number_casting -= 1;
+                },
+                &Client::Watching(ref watcher) => {
+                    event_loop.deregister(&watcher.sock);
+                    self.number_watching -= 1;
+                },
+            }
+            client.remove();
+        }
+        else {
+            panic!("Couldn't find token {:?} in self.clients", token);
+        }
     }
 }
 
@@ -106,7 +126,9 @@ impl Handler for Termcastd {
             _ => {
                 match (hint.is_data(), hint.is_hup(), hint.is_error()) {
                     (true, false, false) => {},
-                    (_, true, false) => {},
+                    (_, true, false) => {
+                        self.handle_disconnect(event_loop, token);
+                    },
                     (_, _, true) => {},
                     (false, false, false) => {},
                 };
