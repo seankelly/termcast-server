@@ -64,15 +64,15 @@ impl Termcastd {
         if let Entry::Occupied(client) = self.clients.entry(token) {
             match client.get() {
                 &Client::Casting(ref caster) => {
-                    event_loop.deregister(&caster.sock);
+                    let res = event_loop.deregister(&caster.sock);
                     self.number_casting -= 1;
                     let channel = event_loop.channel();
                     for watcher in caster.watchers.iter() {
-                        channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
+                        let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
                     }
                 },
                 &Client::Watching(ref watcher) => {
-                    event_loop.deregister(&watcher.sock);
+                    let res = event_loop.deregister(&watcher.sock);
                     self.number_watching -= 1;
                 },
             }
