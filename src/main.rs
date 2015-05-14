@@ -47,8 +47,9 @@ enum Client {
 impl Termcastd {
     fn caster_menu(&mut self, watcher: &mut Watcher) {
         let menu_header = format!(
-            "{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n",
-            "", self.number_casting, self.number_watching);
+            "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n",
+            term::clear_screen(), term::reset_cursor(),
+            self.number_casting, self.number_watching);
         let menu_header_bytes = menu_header.as_bytes();
         let res = watcher.sock.write_slice(&menu_header_bytes);
     }
