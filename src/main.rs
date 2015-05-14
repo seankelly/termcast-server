@@ -153,6 +153,11 @@ impl Handler for Termcastd {
     }
 }
 
+mod term {
+    pub fn clear_screen() -> &'static str { "\x1b[2J" }
+    pub fn reset_cursor() -> &'static str { "\x1b[H" }
+}
+
 
 fn main() {
     let caster_addr = "127.0.0.1:31337".parse().unwrap();
