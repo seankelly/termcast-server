@@ -34,6 +34,10 @@ struct Termcastd {
 }
 
 
+enum TermcastdMessage {
+    CasterDisconnected(Token),
+}
+
 enum Client {
     Casting(Caster),
     Watching(Watcher),
@@ -61,6 +65,10 @@ impl Termcastd {
                 &Client::Casting(ref caster) => {
                     event_loop.deregister(&caster.sock);
                     self.number_casting -= 1;
+                    let channel = event_loop.channel();
+                    for watcher in caster.watchers.iter() {
+                        channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
+                    }
                 },
                 &Client::Watching(ref watcher) => {
                     event_loop.deregister(&watcher.sock);
@@ -77,7 +85,7 @@ impl Termcastd {
 
 impl Handler for Termcastd {
     type Timeout = ();
-    type Message = ();
+    type Message = TermcastdMessage;
 
     fn readable(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token, hint: ReadHint) {
         match token {
@@ -138,6 +146,10 @@ impl Handler for Termcastd {
                 };
             },
         }
+    }
+
+    fn notify(&mut self, event_loop: &mut EventLoop<Termcastd>, message: TermcastdMessage) {
+        println!("Got message");
     }
 }
 
