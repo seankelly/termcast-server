@@ -15,11 +15,13 @@ const WATCHER: Token = Token(1);
 
 struct Caster {
     sock: NonBlock<TcpStream>,
+    token: Token,
     watchers: Vec<Rc<Watcher>>,
 }
 
 struct Watcher {
     sock: NonBlock<TcpStream>,
+    token: Token,
 }
 
 struct Termcastd {
@@ -82,12 +84,13 @@ impl Handler for Termcastd {
             CASTER => {
                 if let Ok(opt) = self.listen_caster.accept() {
                     if let Some(sock) = opt {
-                        let mut caster = Caster {
+                        let token = self.next_token();
+                        let caster = Caster {
                             sock: sock,
+                            token: token,
                             watchers: Vec::new(),
                         };
                         self.number_casting += 1;
-                        let token = self.next_token();
                         let res = event_loop.register_opt(
                             &caster.sock,
                             token,
@@ -104,12 +107,13 @@ impl Handler for Termcastd {
             WATCHER => {
                 if let Ok(opt) = self.listen_watcher.accept() {
                     if let Some(sock) = opt {
+                        let token = self.next_token();
                         let mut watcher = Watcher {
                             sock: sock,
+                            token: token,
                         };
                         self.number_watching += 1;
                         self.caster_menu(&mut watcher);
-                        let token = self.next_token();
                         let res = event_loop.register_opt(
                             &watcher.sock,
                             token,
