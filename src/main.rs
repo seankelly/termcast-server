@@ -48,11 +48,25 @@ enum Client {
 impl Termcastd {
     fn caster_menu(&mut self, watcher: &mut Watcher) {
         let menu_header = format!(
-            "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n",
+            "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
             term::clear_screen(), term::reset_cursor(),
             self.number_casting, self.number_watching);
+        let menu_choices: Vec<String> = self.clients.iter()
+                   .filter(|client| {
+                       let (t, c) = *client;
+                       match c {
+                           &Client::Casting(ref C) => true, _ => false
+                       }
+                   })
+                   .skip(watcher.offset)
+                   .enumerate()
+                   .map(|c| "caster".to_string())
+                   .collect();
         let menu_header_bytes = menu_header.as_bytes();
+        let menu = menu_choices.connect("n");
+        let menu_bytes = menu.as_bytes();
         let res = watcher.sock.write_slice(&menu_header_bytes);
+        let res = watcher.sock.write_slice(&menu_bytes);
     }
 
     fn next_token(&mut self) -> Token {
