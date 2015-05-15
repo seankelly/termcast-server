@@ -67,6 +67,10 @@ impl Termcastd {
                     let res = event_loop.deregister(&caster.sock);
                     self.number_casting -= 1;
                     let channel = event_loop.channel();
+                    // To not have to do a mutable borrow, send a message to
+                    // reset these watchers back to the main menu. Everything
+                    // will be dropped after the end of the match when the
+                    // entry is removed.
                     for watcher in caster.watchers.iter() {
                         let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
                     }
