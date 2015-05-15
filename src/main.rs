@@ -20,6 +20,7 @@ struct Caster {
 }
 
 struct Watcher {
+    offset: usize,
     sock: NonBlock<TcpStream>,
     token: Token,
 }
@@ -122,6 +123,7 @@ impl Handler for Termcastd {
                     if let Some(sock) = opt {
                         let token = self.next_token();
                         let mut watcher = Watcher {
+                            offset: 0,
                             sock: sock,
                             token: token,
                         };
