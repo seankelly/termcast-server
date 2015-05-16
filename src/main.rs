@@ -61,7 +61,7 @@ impl Termcastd {
             self.number_casting, self.number_watching);
         let menu_choices: Vec<String> = self.clients.iter()
                    .filter_map(|c| {
-                       let (t, client) = c;
+                       let (_token, client) = c;
                        match client {
                            &Client::Casting(ref caster) => Some(caster),
                            _ => None,
