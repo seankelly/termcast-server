@@ -50,6 +50,11 @@ enum Client {
 
 impl Termcastd {
     fn show_menu(&mut self, watcher: &mut Watcher) {
+        fn caster_menu_entry(choice: &String, caster: &Caster) -> String {
+            let _caster = caster;
+            format!(" {}) {}", choice, "caster")
+        }
+
         let menu_header = format!(
             "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
             term::clear_screen(), term::reset_cursor(),
@@ -67,7 +72,7 @@ impl Termcastd {
                    .zip(self.menu_choices.iter())
                    .map(|c| {
                        let (caster, choice) = c;
-                       format!(" {}) {}", choice, "caster")
+                       caster_menu_entry(choice, caster)
                    })
                    .collect();
         let menu_header_bytes = menu_header.as_bytes();
