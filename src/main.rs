@@ -34,6 +34,7 @@ struct Termcastd {
     next_token_id: usize,
     number_watching: u32,
     number_casting: u32,
+    menu_choices: Vec<String>,
 }
 
 
@@ -197,6 +198,10 @@ fn main() {
     event_loop.register(&listen_caster, CASTER).unwrap();
     event_loop.register(&listen_watcher, WATCHER).unwrap();
 
+    let menu_choices = (97..123)
+                       .filter_map(std::char::from_u32)
+                       .map(|c| c.to_string())
+                       .collect();
     let mut termcastd = Termcastd {
         listen_caster: listen_caster,
         listen_watcher: listen_watcher,
@@ -204,6 +209,7 @@ fn main() {
         next_token_id: 2,
         number_watching: 0,
         number_casting: 0,
+        menu_choices: menu_choices,
     };
     event_loop.run(&mut termcastd).unwrap();
 }
