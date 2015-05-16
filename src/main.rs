@@ -49,7 +49,7 @@ enum Client {
 
 
 impl Termcastd {
-    fn caster_menu(&mut self, watcher: &mut Watcher) {
+    fn show_menu(&mut self, watcher: &mut Watcher) {
         let menu_header = format!(
             "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
             term::clear_screen(), term::reset_cursor(),
@@ -149,7 +149,7 @@ impl Handler for Termcastd {
                             token: token,
                         };
                         self.number_watching += 1;
-                        self.caster_menu(&mut watcher);
+                        self.show_menu(&mut watcher);
                         let res = event_loop.register_opt(
                             &watcher.sock,
                             token,
