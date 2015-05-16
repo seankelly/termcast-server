@@ -76,7 +76,8 @@ impl Termcastd {
                    })
                    .collect();
         let menu_header_bytes = menu_header.as_bytes();
-        let menu = menu_choices.connect("\n");
+        let mut menu = menu_choices.connect("\n");
+        menu.push_str("\n");
         let menu_bytes = menu.as_bytes();
         let res = watcher.sock.write_slice(&menu_header_bytes);
         let res = watcher.sock.write_slice(&menu_bytes);
