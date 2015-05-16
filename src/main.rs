@@ -181,14 +181,15 @@ mod term {
 
 
 fn main() {
-    println!("Listening on caster port");
+    println!("Listening on caster port.");
     let caster_addr = "127.0.0.1:31337".parse().unwrap();
     let listen_caster = tcp::listen(&caster_addr).unwrap();
 
-    println!("Listening on watcher port");
+    println!("Listening on watcher port.");
     let watcher_addr = "127.0.0.1:2300".parse().unwrap();
     let listen_watcher = tcp::listen(&watcher_addr).unwrap();
 
+    println!("Registering listeners with event loop.");
     let mut event_loop = EventLoop::new().unwrap();
     event_loop.register(&listen_caster, CASTER).unwrap();
     event_loop.register(&listen_watcher, WATCHER).unwrap();
