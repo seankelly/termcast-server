@@ -55,18 +55,18 @@ impl Termcastd {
             term::clear_screen(), term::reset_cursor(),
             self.number_casting, self.number_watching);
         let menu_choices: Vec<String> = self.clients.iter()
-                   .filter(|client| {
-                       let (t, c) = *client;
-                       match c {
-                           &Client::Casting(ref C) => true,
-                           _ => false
+                   .filter_map(|c| {
+                       let (t, client) = c;
+                       match client {
+                           &Client::Casting(ref caster) => Some(caster),
+                           _ => None,
                        }
                    })
                    .skip(watcher.offset)
                    .take(CASTERS_PER_SCREEN)
                    .zip(self.menu_choices.iter())
                    .map(|c| {
-                       let ((_, client), choice) = c;
+                       let (caster, choice) = c;
                        format!(" {}) {}", choice, "caster")
                    })
                    .collect();
