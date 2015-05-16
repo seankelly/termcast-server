@@ -12,6 +12,8 @@ use std::rc::Rc;
 
 const CASTER: Token = Token(0);
 const WATCHER: Token = Token(1);
+const CASTERS_PER_SCREEN: usize = 16;
+
 
 struct Caster {
     sock: NonBlock<TcpStream>,
@@ -59,6 +61,7 @@ impl Termcastd {
                        }
                    })
                    .skip(watcher.offset)
+                   .take(CASTERS_PER_SCREEN)
                    .enumerate()
                    .map(|c| "caster".to_string())
                    .collect();
