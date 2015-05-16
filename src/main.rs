@@ -58,7 +58,8 @@ impl Termcastd {
                    .filter(|client| {
                        let (t, c) = *client;
                        match c {
-                           &Client::Casting(ref C) => true, _ => false
+                           &Client::Casting(ref C) => true,
+                           _ => false
                        }
                    })
                    .skip(watcher.offset)
