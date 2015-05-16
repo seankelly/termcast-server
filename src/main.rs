@@ -63,8 +63,11 @@ impl Termcastd {
                    })
                    .skip(watcher.offset)
                    .take(CASTERS_PER_SCREEN)
-                   .enumerate()
-                   .map(|c| "caster".to_string())
+                   .zip(self.menu_choices.iter())
+                   .map(|c| {
+                       let ((_, client), choice) = c;
+                       format!(" {}) {}", choice, "caster")
+                   })
                    .collect();
         let menu_header_bytes = menu_header.as_bytes();
         let menu = menu_choices.connect("n");
