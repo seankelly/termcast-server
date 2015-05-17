@@ -128,15 +128,17 @@ impl Termcastd {
                     token: token,
                     watchers: Vec::new(),
                 };
-                self.number_casting += 1;
                 let res = event_loop.register_opt(
                     &caster.sock,
                     token,
                     Interest::all(),
                     PollOpt::edge(),
                 );
-                let client = Client::Casting(caster);
-                self.clients.insert(token, client);
+                if res.is_ok() {
+                    self.number_casting += 1;
+                    let client = Client::Casting(caster);
+                    self.clients.insert(token, client);
+                }
             }
         }
         else {
@@ -152,16 +154,18 @@ impl Termcastd {
                     sock: sock,
                     token: token,
                 };
-                self.number_watching += 1;
-                self.show_menu(&mut watcher);
                 let res = event_loop.register_opt(
                     &watcher.sock,
                     token,
                     Interest::all(),
                     PollOpt::edge(),
                 );
-                let client = Client::Watching(watcher);
-                self.clients.insert(token, client);
+                if res.is_ok() {
+                    self.number_watching += 1;
+                    self.show_menu(&mut watcher);
+                    let client = Client::Watching(watcher);
+                    self.clients.insert(token, client);
+                }
             }
         }
         else {
