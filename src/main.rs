@@ -89,6 +89,9 @@ impl Termcastd {
         return token;
     }
 
+    fn handle_data(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+    }
+
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Entry::Occupied(client) = self.clients.entry(token) {
             match client.get() {
@@ -172,7 +175,9 @@ impl Handler for Termcastd {
             },
             _ => {
                 match (hint.is_data(), hint.is_hup(), hint.is_error()) {
-                    (true, false, false) => {},
+                    (true, false, false) => {
+                        self.handle_data(event_loop, token);
+                    },
                     (_, true, false) => {
                         self.handle_disconnect(event_loop, token);
                     },
