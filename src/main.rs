@@ -25,6 +25,7 @@ struct Watcher {
     offset: usize,
     sock: NonBlock<TcpStream>,
     token: Token,
+    state: WatcherState,
 }
 
 struct Termcastd {
@@ -47,6 +48,12 @@ enum Client {
     Watching(Watcher),
 }
 
+enum WatcherState {
+    Connecting,
+    MainMenu,
+    Watching,
+}
+
 
 impl Termcastd {
     fn show_menu(&mut self, watcher: &mut Watcher) {
@@ -54,6 +61,8 @@ impl Termcastd {
             let _caster = caster;
             format!(" {}) {}", choice, "caster")
         }
+
+        watcher.state = WatcherState::MainMenu;
 
         let menu_header = format!(
             "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
@@ -151,6 +160,7 @@ impl Termcastd {
                     offset: 0,
                     sock: sock,
                     token: token,
+                    state: WatcherState::Connecting,
                 };
                 let res = event_loop.register_opt(
                     &watcher.sock,
