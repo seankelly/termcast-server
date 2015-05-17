@@ -141,8 +141,6 @@ impl Termcastd {
                 }
             }
         }
-        else {
-        }
     }
 
     fn new_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>) {
@@ -167,8 +165,6 @@ impl Termcastd {
                     self.clients.insert(token, client);
                 }
             }
-        }
-        else {
         }
     }
 }
