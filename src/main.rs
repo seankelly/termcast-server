@@ -118,6 +118,55 @@ impl Termcastd {
             panic!("Couldn't find token {:?} in self.clients", token);
         }
     }
+
+    fn new_caster(&mut self, event_loop: &mut EventLoop<Termcastd>) {
+        if let Ok(opt) = self.listen_caster.accept() {
+            if let Some(sock) = opt {
+                let token = self.next_token();
+                let caster = Caster {
+                    sock: sock,
+                    token: token,
+                    watchers: Vec::new(),
+                };
+                self.number_casting += 1;
+                let res = event_loop.register_opt(
+                    &caster.sock,
+                    token,
+                    Interest::all(),
+                    PollOpt::edge(),
+                );
+                let client = Client::Casting(caster);
+                self.clients.insert(token, client);
+            }
+        }
+        else {
+        }
+    }
+
+    fn new_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>) {
+        if let Ok(opt) = self.listen_watcher.accept() {
+            if let Some(sock) = opt {
+                let token = self.next_token();
+                let mut watcher = Watcher {
+                    offset: 0,
+                    sock: sock,
+                    token: token,
+                };
+                self.number_watching += 1;
+                self.show_menu(&mut watcher);
+                let res = event_loop.register_opt(
+                    &watcher.sock,
+                    token,
+                    Interest::all(),
+                    PollOpt::edge(),
+                );
+                let client = Client::Watching(watcher);
+                self.clients.insert(token, client);
+            }
+        }
+        else {
+        }
+    }
 }
 
 impl Handler for Termcastd {
@@ -127,51 +176,10 @@ impl Handler for Termcastd {
     fn readable(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token, hint: ReadHint) {
         match token {
             CASTER => {
-                if let Ok(opt) = self.listen_caster.accept() {
-                    if let Some(sock) = opt {
-                        let token = self.next_token();
-                        let caster = Caster {
-                            sock: sock,
-                            token: token,
-                            watchers: Vec::new(),
-                        };
-                        self.number_casting += 1;
-                        let res = event_loop.register_opt(
-                            &caster.sock,
-                            token,
-                            Interest::all(),
-                            PollOpt::edge(),
-                        );
-                        let client = Client::Casting(caster);
-                        self.clients.insert(token, client);
-                    }
-                }
-                else {
-                }
+                self.new_caster(event_loop);
             },
             WATCHER => {
-                if let Ok(opt) = self.listen_watcher.accept() {
-                    if let Some(sock) = opt {
-                        let token = self.next_token();
-                        let mut watcher = Watcher {
-                            offset: 0,
-                            sock: sock,
-                            token: token,
-                        };
-                        self.number_watching += 1;
-                        self.show_menu(&mut watcher);
-                        let res = event_loop.register_opt(
-                            &watcher.sock,
-                            token,
-                            Interest::all(),
-                            PollOpt::edge(),
-                        );
-                        let client = Client::Watching(watcher);
-                        self.clients.insert(token, client);
-                    }
-                }
-                else {
-                }
+                self.new_watcher(event_loop);
             },
             _ => {
                 match (hint.is_data(), hint.is_hup(), hint.is_error()) {
