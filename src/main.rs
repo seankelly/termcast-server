@@ -32,6 +32,8 @@ struct Termcastd {
     listen_caster: NonBlock<TcpListener>,
     listen_watcher: NonBlock<TcpListener>,
     clients: HashMap<Token, Client>,
+    watchers: HashMap<Token, Watcher>,
+    casters: HashMap<Token, Caster>,
     next_token_id: usize,
     number_watching: u32,
     number_casting: u32,
@@ -44,8 +46,8 @@ enum TermcastdMessage {
 }
 
 enum Client {
-    Casting(Caster),
-    Watching(Watcher),
+    Caster,
+    Watcher,
 }
 
 enum WatcherState {
@@ -68,14 +70,7 @@ impl Termcastd {
             "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
             term::clear_screen(), term::reset_cursor(),
             self.number_casting, self.number_watching);
-        let menu_choices: Vec<String> = self.clients.iter()
-                   .filter_map(|c| {
-                       let (_token, client) = c;
-                       match client {
-                           &Client::Casting(ref caster) => Some(caster),
-                           _ => None,
-                       }
-                   })
+        let menu_choices: Vec<String> = self.casters.values()
                    .skip(watcher.offset)
                    .take(CASTERS_PER_SCREEN)
                    .zip(self.menu_choices.iter())
@@ -99,26 +94,49 @@ impl Termcastd {
     }
 
     fn handle_data(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        if let Entry::Occupied(client) = self.clients.entry(token) {
+            match client.get() {
+                &Client::Caster => {
+                },
+                &Client::Watcher => {
+                },
+            }
+        }
+        else {
+            panic!("Couldn't find token {:?} in self.clients", token);
+        }
     }
 
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Entry::Occupied(client) = self.clients.entry(token) {
             match client.get() {
-                &Client::Casting(ref caster) => {
-                    let res = event_loop.deregister(&caster.sock);
-                    self.number_casting -= 1;
-                    let channel = event_loop.channel();
-                    // To not have to do a mutable borrow, send a message to
-                    // reset these watchers back to the main menu. Everything
-                    // will be dropped after the end of the match when the
-                    // entry is removed.
-                    for watcher in caster.watchers.iter() {
-                        let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
+                &Client::Caster => {
+                    if let Entry::Occupied(caster_entry) = self.casters.entry(token) {
+                        {
+                            let caster = caster_entry.get();
+                            let res = event_loop.deregister(&caster.sock);
+                            self.number_casting -= 1;
+                            let channel = event_loop.channel();
+                            // To not have to do a mutable borrow, send a message to
+                            // reset these watchers back to the main menu. Everything
+                            // will be dropped after the end of the match when the
+                            // entry is removed.
+                            for watcher in caster.watchers.iter() {
+                                let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
+                            }
+                        }
+                        caster_entry.remove();
                     }
                 },
-                &Client::Watching(ref watcher) => {
-                    let res = event_loop.deregister(&watcher.sock);
-                    self.number_watching -= 1;
+                &Client::Watcher => {
+                    if let Entry::Occupied(watcher_entry) = self.watchers.entry(token) {
+                        {
+                            let watcher = watcher_entry.get();
+                            let res = event_loop.deregister(&watcher.sock);
+                        }
+                        self.number_watching -= 1;
+                        watcher_entry.remove();
+                    }
                 },
             }
             client.remove();
@@ -145,7 +163,7 @@ impl Termcastd {
                 );
                 if res.is_ok() {
                     self.number_casting += 1;
-                    let client = Client::Casting(caster);
+                    let client = Client::Caster;
                     self.clients.insert(token, client);
                 }
             }
@@ -171,7 +189,7 @@ impl Termcastd {
                 if res.is_ok() {
                     self.number_watching += 1;
                     self.show_menu(&mut watcher);
-                    let client = Client::Watching(watcher);
+                    let client = Client::Watcher;
                     self.clients.insert(token, client);
                 }
             }
@@ -239,6 +257,8 @@ fn main() {
         listen_caster: listen_caster,
         listen_watcher: listen_watcher,
         clients: HashMap::new(),
+        casters: HashMap::new(),
+        watchers: HashMap::new(),
         next_token_id: 2,
         number_watching: 0,
         number_casting: 0,
