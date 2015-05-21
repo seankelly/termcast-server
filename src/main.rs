@@ -94,18 +94,10 @@ impl Termcastd {
         return token;
     }
 
-    fn handle_data(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
-        if let Entry::Occupied(client) = self.clients.entry(token) {
-            match client.get() {
-                &Client::Caster => {
-                },
-                &Client::Watcher => {
-                },
-            }
-        }
-        else {
-            panic!("Couldn't find token {:?} in self.clients", token);
-        }
+    fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+    }
+
+    fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
     }
 
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
@@ -218,10 +210,10 @@ impl Handler for Termcastd {
                 };
                 match (hint.is_data(), hint.is_hup(), hint.is_error(), client) {
                     (true, false, false, Client::Caster) => {
-                        self.handle_data(event_loop, token);
+                        self.read_caster(event_loop, token);
                     },
                     (true, false, false, Client::Watcher) => {
-                        self.handle_data(event_loop, token);
+                        self.read_watcher(event_loop, token);
                     },
                     (_, true, false, _) => {
                         self.handle_disconnect(event_loop, token);
