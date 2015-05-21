@@ -45,6 +45,7 @@ enum TermcastdMessage {
     CasterDisconnected(Token),
 }
 
+#[derive(Clone, Copy, Debug)]
 enum Client {
     Caster,
     Watcher,
@@ -210,15 +211,21 @@ impl Handler for Termcastd {
                 self.new_watcher(event_loop);
             },
             _ => {
-                match (hint.is_data(), hint.is_hup(), hint.is_error()) {
-                    (true, false, false) => {
+                let client = {
+                    *self.clients.get(&token).expect("Expected to find token.")
+                };
+                match (hint.is_data(), hint.is_hup(), hint.is_error(), client) {
+                    (true, false, false, Client::Caster) => {
                         self.handle_data(event_loop, token);
                     },
-                    (_, true, false) => {
+                    (true, false, false, Client::Watcher) => {
+                        self.handle_data(event_loop, token);
+                    },
+                    (_, true, false, _) => {
                         self.handle_disconnect(event_loop, token);
                     },
-                    (_, _, true) => {},
-                    (false, false, false) => {},
+                    (_, _, true, _) => {},
+                    (false, false, false, _) => {},
                 };
             },
         }
