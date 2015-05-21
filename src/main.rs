@@ -98,6 +98,21 @@ impl Termcastd {
     }
 
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        let mut watcher = self.watchers.get_mut(&token).unwrap();
+        let mut bytes_received = [0u8; 128];
+        if let Ok(res) = watcher.sock.read_slice(&mut bytes_received) {
+            if let Some(num_bytes) = res {
+                let each_byte = (0..num_bytes);
+                for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
+                }
+            }
+            else {
+                return;
+            }
+        }
+        else {
+            return;
+        }
     }
 
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
