@@ -166,6 +166,7 @@ impl Termcastd {
                     self.number_casting += 1;
                     let client = Client::Caster;
                     self.clients.insert(token, client);
+                    self.casters.insert(token, caster);
                 }
             }
         }
@@ -192,6 +193,7 @@ impl Termcastd {
                     self.show_menu(&mut watcher);
                     let client = Client::Watcher;
                     self.clients.insert(token, client);
+                    self.watchers.insert(token, watcher);
                 }
             }
         }
