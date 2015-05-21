@@ -259,7 +259,13 @@ impl Handler for Termcastd {
     }
 
     fn notify(&mut self, event_loop: &mut EventLoop<Termcastd>, message: TermcastdMessage) {
-        println!("Got message");
+        match message {
+            TermcastdMessage::CasterDisconnected(token) => {
+            },
+            TermcastdMessage::WatcherDisconnected(token) => {
+                self.handle_disconnect(event_loop, token);
+            },
+        }
     }
 }
 
