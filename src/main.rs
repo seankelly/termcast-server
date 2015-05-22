@@ -13,6 +13,10 @@ use std::rc::Rc;
 const CASTER: Token = Token(0);
 const WATCHER: Token = Token(1);
 const CASTERS_PER_SCREEN: usize = 16;
+const MENU_CHOICES: [&'static str; 26] = ["a", "b", "c", "d", "e", "f", "g",
+                                          "h", "i", "j", "k", "l", "m", "n",
+                                          "o", "p", "q", "r", "s", "t", "u",
+                                          "v", "w", "x", "y", "z"];
 
 
 struct Caster {
@@ -37,7 +41,6 @@ struct Termcastd {
     next_token_id: usize,
     number_watching: u32,
     number_casting: u32,
-    menu_choices: Vec<String>,
 }
 
 
@@ -62,7 +65,7 @@ enum WatcherState {
 
 impl Termcastd {
     fn show_menu(&mut self, watcher: &mut Watcher) {
-        fn caster_menu_entry(choice: &String, caster: &Caster) -> String {
+        fn caster_menu_entry(choice: &'static str, caster: &Caster) -> String {
             let _caster = caster;
             format!(" {}) {}", choice, "caster")
         }
@@ -76,7 +79,7 @@ impl Termcastd {
         let menu_choices: Vec<String> = self.casters.values()
                    .skip(watcher.offset)
                    .take(CASTERS_PER_SCREEN)
-                   .zip(self.menu_choices.iter())
+                   .zip(MENU_CHOICES.iter())
                    .map(|c| {
                        let (caster, choice) = c;
                        caster_menu_entry(choice, caster)
@@ -289,10 +292,6 @@ fn main() {
     event_loop.register(&listen_caster, CASTER).unwrap();
     event_loop.register(&listen_watcher, WATCHER).unwrap();
 
-    let menu_choices = (97..123)
-                       .filter_map(std::char::from_u32)
-                       .map(|c| c.to_string())
-                       .collect();
     let mut termcastd = Termcastd {
         listen_caster: listen_caster,
         listen_watcher: listen_watcher,
@@ -302,7 +301,6 @@ fn main() {
         next_token_id: 2,
         number_watching: 0,
         number_casting: 0,
-        menu_choices: menu_choices,
     };
     event_loop.run(&mut termcastd).unwrap();
 }
