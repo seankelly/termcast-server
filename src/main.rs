@@ -112,7 +112,13 @@ impl Termcastd {
                 let each_byte = (0..num_bytes);
                 for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
                     match watcher.state {
-                        WatcherState::Watching => {},
+                        WatcherState::Watching => {
+                            // Pressing 'q' while watching returns the watcher to the main menu.
+                            if *byte == 113 {
+                                // This will reset the state back to the main menu.
+                                watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
+                            }
+                        },
                         WatcherState::MainMenu => {
                             match *byte {
                                 113 => { // q
