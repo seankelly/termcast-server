@@ -13,10 +13,9 @@ use std::rc::Rc;
 const CASTER: Token = Token(0);
 const WATCHER: Token = Token(1);
 const CASTERS_PER_SCREEN: usize = 16;
-const MENU_CHOICES: [&'static str; 26] = ["a", "b", "c", "d", "e", "f", "g",
+const MENU_CHOICES: [&'static str; 16] = ["a", "b", "c", "d", "e", "f", "g",
                                           "h", "i", "j", "k", "l", "m", "n",
-                                          "o", "p", "q", "r", "s", "t", "u",
-                                          "v", "w", "x", "y", "z"];
+                                          "o", "p"];
 
 
 struct Caster {
