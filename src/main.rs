@@ -62,36 +62,38 @@ enum WatcherState {
     Watching,
 }
 
-
-impl Termcastd {
-    fn show_menu(&mut self, watcher: &mut Watcher) {
+impl Watcher {
+    fn show_menu(&mut self, casters: &HashMap<Token, Caster>, number_casting: &u32, number_watching: &u32) {
         fn caster_menu_entry(choice: &'static str, caster: &Caster) -> String {
             let _caster = caster;
             format!(" {}) {}", choice, "caster")
         }
 
-        watcher.state = WatcherState::MainMenu;
+        self.state = WatcherState::MainMenu;
 
         let menu_header = format!(
             "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
             term::clear_screen(), term::reset_cursor(),
-            self.number_casting, self.number_watching);
-        let menu_choices: Vec<String> = self.casters.values()
-                   .skip(watcher.offset)
-                   .take(CASTERS_PER_SCREEN)
-                   .zip(MENU_CHOICES.iter())
-                   .map(|c| {
-                       let (caster, choice) = c;
-                       caster_menu_entry(choice, caster)
-                   })
-                   .collect();
+            number_casting, number_watching);
+        let menu_choices: Vec<String> = casters.values()
+                    .skip(self.offset)
+                    .take(CASTERS_PER_SCREEN)
+                    .zip(MENU_CHOICES.iter())
+                    .map(|c| {
+                        let (caster, choice) = c;
+                        caster_menu_entry(choice, caster)
+                    })
+                    .collect();
         let menu_header_bytes = menu_header.as_bytes();
         let mut menu = menu_choices.connect("\n");
         menu.push_str("\n");
         let menu_bytes = menu.as_bytes();
-        let res = watcher.sock.write_slice(&menu_header_bytes);
-        let res = watcher.sock.write_slice(&menu_bytes);
+        let res = self.sock.write_slice(&menu_header_bytes);
+        let res = self.sock.write_slice(&menu_bytes);
     }
+}
+
+impl Termcastd {
 
     fn next_token(&mut self) -> Token {
         let token = Token(self.next_token_id);
@@ -218,7 +220,7 @@ impl Termcastd {
                 );
                 if res.is_ok() {
                     self.number_watching += 1;
-                    self.show_menu(&mut watcher);
+                    watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
                     let client = Client::Watcher;
                     self.clients.insert(token, client);
                     self.watchers.insert(token, watcher);
