@@ -109,7 +109,7 @@ impl Termcastd {
         let mut bytes_received = [0u8; 128];
         if let Ok(res) = watcher.sock.read_slice(&mut bytes_received) {
             if let Some(num_bytes) = res {
-                let each_byte = (0..num_bytes);
+                let each_byte = 0..num_bytes;
                 for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
                     match watcher.state {
                         WatcherState::Watching => {
