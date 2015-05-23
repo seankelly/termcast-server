@@ -109,6 +109,7 @@ impl Termcastd {
         if let Ok(res) = watcher.sock.read_slice(&mut bytes_received) {
             if let Some(num_bytes) = res {
                 let each_byte = 0..num_bytes;
+                let channel = event_loop.channel();
                 for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
                     match watcher.state {
                         WatcherState::Watching => {
@@ -122,7 +123,6 @@ impl Termcastd {
                             match *byte {
                                 113 => { // q
                                     watcher.state = WatcherState::Disconnecting;
-                                    let channel = event_loop.channel();
                                     channel.send(TermcastdMessage::WatcherDisconnected(token));
                                     return;
                                 },
