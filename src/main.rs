@@ -74,6 +74,17 @@ impl Watcher {
             "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
             term::clear_screen(), term::reset_cursor(),
             number_casting, number_watching);
+
+        // If the offset is too high, reset it to the last page.
+        if self.offset > casters.len() {
+            let num_casters = casters.len();
+            let page_length = MENU_CHOICES.len();
+            let pages = num_casters / page_length;
+            let new_offset = pages * page_length;
+            self.offset = if num_casters % num_casters != 0 { new_offset }
+                          else { new_offset - 1 };
+        }
+
         let menu_choices: Vec<String> = casters.values()
                     .skip(self.offset)
                     .take(CASTERS_PER_SCREEN)
