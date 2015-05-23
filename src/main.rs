@@ -327,8 +327,17 @@ fn main() {
     let listen_caster = listen_caster.unwrap();
 
     println!("Listening on watcher port.");
-    let watcher_addr = "127.0.0.1:2300".parse().unwrap();
-    let listen_watcher = tcp::listen(&watcher_addr).unwrap();
+    let watcher_addr = "127.0.0.1:2300".parse();
+    if let Err(msg) = watcher_addr {
+        panic!("Couldn't parse watcher address: {:?}", msg);
+    }
+    let watcher_addr = watcher_addr.unwrap();
+
+    let listen_watcher = tcp::listen(&watcher_addr);
+    if let Err(msg) = listen_watcher {
+        panic!("Couldn't listen on watcher address: {:?}", msg);
+    }
+    let listen_watcher = listen_watcher.unwrap();
 
     println!("Registering listeners with event loop.");
     let mut event_loop = EventLoop::new().unwrap();
