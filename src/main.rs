@@ -121,6 +121,17 @@ impl Termcastd {
                         },
                         WatcherState::MainMenu => {
                             match *byte {
+                                97...112 => { // a...p
+                                    // a = 97.
+                                    let page_offset = *byte as usize - 97;
+                                    // Check if the entry picked is still valid.
+                                    if watcher.offset + page_offset <= self.casters.len() {
+                                    }
+                                    else {
+                                        watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
+                                    }
+                                    watcher.state = WatcherState::Watching;
+                                }
                                 113 => { // q
                                     watcher.state = WatcherState::Disconnecting;
                                     channel.send(TermcastdMessage::WatcherDisconnected(token));
