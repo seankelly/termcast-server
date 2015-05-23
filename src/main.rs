@@ -314,8 +314,17 @@ mod term {
 
 fn main() {
     println!("Listening on caster port.");
-    let caster_addr = "127.0.0.1:31337".parse().unwrap();
-    let listen_caster = tcp::listen(&caster_addr).unwrap();
+    let caster_addr = "127.0.0.1:31337".parse();
+    if let Err(msg) = caster_addr {
+        panic!("Couldn't parse caster address: {:?}", msg);
+    }
+    let caster_addr = caster_addr.unwrap();
+
+    let listen_caster = tcp::listen(&caster_addr);
+    if let Err(msg) = listen_caster {
+        panic!("Unable to listen on caster port: {:?}", msg);
+    }
+    let listen_caster = listen_caster.unwrap();
 
     println!("Listening on watcher port.");
     let watcher_addr = "127.0.0.1:2300".parse().unwrap();
