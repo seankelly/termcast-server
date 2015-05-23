@@ -46,6 +46,7 @@ struct Termcastd {
 enum TermcastdMessage {
     CasterDisconnected(Token),
     WatcherDisconnected(Token),
+    AddWatcher(Token, usize),
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -136,12 +137,14 @@ impl Termcastd {
                                     // a = 97.
                                     let page_offset = *byte as usize - 97;
                                     // Check if the entry picked is still valid.
-                                    if watcher.offset + page_offset <= self.casters.len() {
+                                    let caster_offset = watcher.offset + page_offset;
+                                    if caster_offset <= self.casters.len() {
+                                        watcher.state = WatcherState::Watching;
+                                        channel.send(TermcastdMessage::AddWatcher(token, caster_offset));
                                     }
                                     else {
                                         watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
                                     }
-                                    watcher.state = WatcherState::Watching;
                                 }
                                 113 => { // q
                                     watcher.state = WatcherState::Disconnecting;
@@ -296,6 +299,8 @@ impl Handler for Termcastd {
             },
             TermcastdMessage::WatcherDisconnected(token) => {
                 self.handle_disconnect(event_loop, token);
+            },
+            TermcastdMessage::AddWatcher(token, caster_offset) => {
             },
         }
     }
