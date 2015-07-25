@@ -3,6 +3,8 @@ extern crate mio;
 extern crate log;
 
 use mio::*;
+use std::io::Read;
+use std::io::Write;
 use mio::tcp::TcpListener;
 use mio::tcp::TcpStream;
 use std::collections::HashMap;
@@ -19,21 +21,21 @@ const MENU_CHOICES: [&'static str; 16] = ["a", "b", "c", "d", "e", "f", "g",
 
 
 struct Caster {
-    sock: NonBlock<TcpStream>,
+    sock: TcpStream,
     token: Token,
     watchers: Vec<Rc<Watcher>>,
 }
 
 struct Watcher {
     offset: usize,
-    sock: NonBlock<TcpStream>,
+    sock: TcpStream,
     token: Token,
     state: WatcherState,
 }
 
 struct Termcastd {
-    listen_caster: NonBlock<TcpListener>,
-    listen_watcher: NonBlock<TcpListener>,
+    listen_caster: TcpListener,
+    listen_watcher: TcpListener,
     clients: HashMap<Token, Client>,
     watchers: HashMap<Token, Watcher>,
     casters: HashMap<Token, Caster>,
@@ -99,8 +101,8 @@ impl Watcher {
         let mut menu = menu_choices.connect("\n");
         menu.push_str("\n");
         let menu_bytes = menu.as_bytes();
-        let res = self.sock.write_slice(&menu_header_bytes);
-        let res = self.sock.write_slice(&menu_bytes);
+        let res = self.sock.write(&menu_header_bytes);
+        let res = self.sock.write(&menu_bytes);
     }
 }
 
@@ -118,49 +120,44 @@ impl Termcastd {
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         let mut watcher = self.watchers.get_mut(&token).unwrap();
         let mut bytes_received = [0u8; 128];
-        if let Ok(res) = watcher.sock.read_slice(&mut bytes_received) {
-            if let Some(num_bytes) = res {
-                let each_byte = 0..num_bytes;
-                let channel = event_loop.channel();
-                for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
-                    match watcher.state {
-                        WatcherState::Watching => {
-                            // Pressing 'q' while watching returns the watcher to the main menu.
-                            if *byte == 113 {
-                                // This will reset the state back to the main menu.
-                                watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
-                            }
-                        },
-                        WatcherState::MainMenu => {
-                            match *byte {
-                                97...112 => { // a...p
-                                    // a = 97.
-                                    let page_offset = *byte as usize - 97;
-                                    // Check if the entry picked is still valid.
-                                    let caster_offset = watcher.offset + page_offset;
-                                    if caster_offset <= self.casters.len() {
-                                        watcher.state = WatcherState::Watching;
-                                        channel.send(TermcastdMessage::AddWatcher(token, caster_offset));
-                                    }
-                                    else {
-                                        watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
-                                    }
+        if let Ok(num_bytes) = watcher.sock.read(&mut bytes_received) {
+            let each_byte = 0..num_bytes;
+            let channel = event_loop.channel();
+            for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
+                match watcher.state {
+                    WatcherState::Watching => {
+                        // Pressing 'q' while watching returns the watcher to the main menu.
+                        if *byte == 113 {
+                            // This will reset the state back to the main menu.
+                            watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
+                        }
+                    },
+                    WatcherState::MainMenu => {
+                        match *byte {
+                            97...112 => { // a...p
+                                // a = 97.
+                                let page_offset = *byte as usize - 97;
+                                // Check if the entry picked is still valid.
+                                let caster_offset = watcher.offset + page_offset;
+                                if caster_offset <= self.casters.len() {
+                                    watcher.state = WatcherState::Watching;
+                                    channel.send(TermcastdMessage::AddWatcher(token, caster_offset));
                                 }
-                                113 => { // q
-                                    watcher.state = WatcherState::Disconnecting;
-                                    channel.send(TermcastdMessage::WatcherDisconnected(token));
-                                    return;
-                                },
-                                _ => {},
+                                else {
+                                    watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
+                                }
                             }
-                        },
-                        WatcherState::Connecting => {},
-                        WatcherState::Disconnecting => { return },
-                    }
+                            113 => { // q
+                                watcher.state = WatcherState::Disconnecting;
+                                channel.send(TermcastdMessage::WatcherDisconnected(token));
+                                return;
+                            },
+                            _ => {},
+                        }
+                    },
+                    WatcherState::Connecting => {},
+                    WatcherState::Disconnecting => { return },
                 }
-            }
-            else {
-                return;
             }
         }
         else {
@@ -219,7 +216,7 @@ impl Termcastd {
                 let res = event_loop.register_opt(
                     &caster.sock,
                     token,
-                    Interest::all(),
+                    EventSet::all(),
                     PollOpt::edge(),
                 );
                 if res.is_ok() {
@@ -245,7 +242,7 @@ impl Termcastd {
                 let res = event_loop.register_opt(
                     &watcher.sock,
                     token,
-                    Interest::all(),
+                    EventSet::all(),
                     PollOpt::edge(),
                 );
                 if res.is_ok() {
@@ -264,7 +261,7 @@ impl Handler for Termcastd {
     type Timeout = ();
     type Message = TermcastdMessage;
 
-    fn readable(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token, hint: ReadHint) {
+    fn ready(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token, event: EventSet) {
         match token {
             CASTER => {
                 self.new_caster(event_loop);
@@ -276,7 +273,7 @@ impl Handler for Termcastd {
                 let client = {
                     *self.clients.get(&token).expect("Expected to find token.")
                 };
-                match (hint.is_data(), hint.is_hup(), hint.is_error(), client) {
+                match (event.is_readable(), event.is_hup(), event.is_error(), client) {
                     (true, false, false, Client::Caster) => {
                         self.read_caster(event_loop, token);
                     },
@@ -301,6 +298,13 @@ impl Handler for Termcastd {
                 self.handle_disconnect(event_loop, token);
             },
             TermcastdMessage::AddWatcher(token, caster_offset) => {
+                if caster_offset < self.casters.len() {
+                }
+                else {
+                    if let Some(watcher) = self.watchers.get_mut(&token) {
+                        watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
+                    }
+                }
             },
         }
     }
@@ -320,7 +324,7 @@ fn main() {
     }
     let caster_addr = caster_addr.unwrap();
 
-    let listen_caster = tcp::listen(&caster_addr);
+    let listen_caster = TcpListener::bind(&caster_addr);
     if let Err(msg) = listen_caster {
         panic!("Unable to listen on caster port: {:?}", msg);
     }
@@ -333,7 +337,7 @@ fn main() {
     }
     let watcher_addr = watcher_addr.unwrap();
 
-    let listen_watcher = tcp::listen(&watcher_addr);
+    let listen_watcher = TcpListener::bind(&watcher_addr);
     if let Err(msg) = listen_watcher {
         panic!("Couldn't listen on watcher address: {:?}", msg);
     }
