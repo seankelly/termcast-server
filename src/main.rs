@@ -23,6 +23,7 @@ const MENU_CHOICES: [&'static str; 16] = ["a", "b", "c", "d", "e", "f", "g",
 struct Caster {
     sock: TcpStream,
     token: Token,
+    name: Option<String>,
     watchers: Vec<Rc<Watcher>>,
 }
 
@@ -211,6 +212,7 @@ impl Termcastd {
                 let caster = Caster {
                     sock: sock,
                     token: token,
+                    name: None,
                     watchers: Vec::new(),
                 };
                 let res = event_loop.register_opt(
