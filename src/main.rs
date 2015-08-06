@@ -169,8 +169,12 @@ impl Termcastd {
 
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         let num_watching = self.watchers.len();
-        let mut watcher = self.watchers.get_mut(&token).unwrap();
-        watcher.parse_input(&mut self.casters, num_watching);
+        if let Some(watcher) = self.watchers.get_mut(&token) {
+            watcher.parse_input(&mut self.casters, num_watching);
+        }
+        else {
+            // Got an event for a token with no matching socket.
+        }
     }
 
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
