@@ -66,7 +66,10 @@ enum WatcherState {
 }
 
 impl Watcher {
-    fn show_menu(&mut self, casters: &HashMap<Token, Caster>, number_casting: &u32, number_watching: &u32) {
+    fn show_menu(&mut self,
+                casters: &HashMap<Token, Caster>,
+                number_casting: usize,
+                number_watching: usize) {
         fn caster_menu_entry(choice: &'static str, caster: &Caster) -> String {
             let _caster = caster;
             format!(" {}) {}", choice, "caster")
@@ -105,6 +108,52 @@ impl Watcher {
         let res = self.sock.write(&menu_header_bytes);
         let res = self.sock.write(&menu_bytes);
     }
+
+    fn parse_input(&mut self,
+                   casters: &mut HashMap<Token, Caster>,
+                   number_watching: usize) {
+        let mut bytes_received = [0u8; 128];
+        while let Ok(num_bytes) = self.sock.read(&mut bytes_received) {
+            let each_byte = 0..num_bytes;
+            //let channel = event_loop.channel();
+            for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
+                match self.state {
+                    WatcherState::Watching => {
+                        // Pressing 'q' while watching returns the watcher to the main menu.
+                        if *byte == 113 {
+                            // This will reset the state back to the main menu.
+                            self.show_menu(&casters, casters.len(), number_watching);
+                        }
+                    },
+                    WatcherState::MainMenu => {
+                        match *byte {
+                            97...112 => { // a...p
+                                // a = 97.
+                                let page_offset = *byte as usize - 97;
+                                // Check if the entry picked is still valid.
+                                let caster_offset = self.offset + page_offset;
+                                if caster_offset <= casters.len() {
+                                    self.state = WatcherState::Watching;
+                                    //channel.send(TermcastdMessage::AddWatcher(token, caster_offset));
+                                }
+                                else {
+                                    self.show_menu(&casters, casters.len(), number_watching);
+                                }
+                            }
+                            113 => { // q
+                                self.state = WatcherState::Disconnecting;
+                                //channel.send(TermcastdMessage::WatcherDisconnected(token));
+                                return;
+                            },
+                            _ => {},
+                        }
+                    },
+                    WatcherState::Connecting => {},
+                    WatcherState::Disconnecting => { return },
+                }
+            }
+        }
+    }
 }
 
 impl Termcastd {
@@ -119,51 +168,9 @@ impl Termcastd {
     }
 
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        let num_watching = self.watchers.len();
         let mut watcher = self.watchers.get_mut(&token).unwrap();
-        let mut bytes_received = [0u8; 128];
-        if let Ok(num_bytes) = watcher.sock.read(&mut bytes_received) {
-            let each_byte = 0..num_bytes;
-            let channel = event_loop.channel();
-            for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
-                match watcher.state {
-                    WatcherState::Watching => {
-                        // Pressing 'q' while watching returns the watcher to the main menu.
-                        if *byte == 113 {
-                            // This will reset the state back to the main menu.
-                            watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
-                        }
-                    },
-                    WatcherState::MainMenu => {
-                        match *byte {
-                            97...112 => { // a...p
-                                // a = 97.
-                                let page_offset = *byte as usize - 97;
-                                // Check if the entry picked is still valid.
-                                let caster_offset = watcher.offset + page_offset;
-                                if caster_offset <= self.casters.len() {
-                                    watcher.state = WatcherState::Watching;
-                                    channel.send(TermcastdMessage::AddWatcher(token, caster_offset));
-                                }
-                                else {
-                                    watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
-                                }
-                            }
-                            113 => { // q
-                                watcher.state = WatcherState::Disconnecting;
-                                channel.send(TermcastdMessage::WatcherDisconnected(token));
-                                return;
-                            },
-                            _ => {},
-                        }
-                    },
-                    WatcherState::Connecting => {},
-                    WatcherState::Disconnecting => { return },
-                }
-            }
-        }
-        else {
-            return;
-        }
+        watcher.parse_input(&mut self.casters, num_watching);
     }
 
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
@@ -249,7 +256,7 @@ impl Termcastd {
                 );
                 if res.is_ok() {
                     self.number_watching += 1;
-                    watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
+                    watcher.show_menu(&self.casters, self.casters.len(), self.watchers.len());
                     let client = Client::Watcher;
                     self.clients.insert(token, client);
                     self.watchers.insert(token, watcher);
@@ -303,8 +310,9 @@ impl Handler for Termcastd {
                 if caster_offset < self.casters.len() {
                 }
                 else {
+                    let num_watching = self.watchers.len();
                     if let Some(watcher) = self.watchers.get_mut(&token) {
-                        watcher.show_menu(&self.casters, &self.number_casting, &self.number_watching);
+                        watcher.show_menu(&self.casters, self.casters.len(), num_watching);
                     }
                 }
             },
