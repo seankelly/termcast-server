@@ -7,6 +7,7 @@ use std::io::Read;
 use std::io::Write;
 use mio::tcp::TcpListener;
 use mio::tcp::TcpStream;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
@@ -24,7 +25,7 @@ struct Caster {
     sock: TcpStream,
     token: Token,
     name: Option<String>,
-    watchers: Vec<Rc<Watcher>>,
+    watchers: Vec<Rc<RefCell<Watcher>>>,
 }
 
 struct Watcher {
@@ -38,7 +39,7 @@ struct Termcastd {
     listen_caster: TcpListener,
     listen_watcher: TcpListener,
     clients: HashMap<Token, Client>,
-    watchers: HashMap<Token, Watcher>,
+    watchers: HashMap<Token, Rc<RefCell<Watcher>>>,
     casters: HashMap<Token, Caster>,
     next_token_id: usize,
     number_watching: u32,
@@ -169,7 +170,8 @@ impl Termcastd {
 
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         let num_watching = self.watchers.len();
-        if let Some(watcher) = self.watchers.get_mut(&token) {
+        if let Some(w) = self.watchers.get_mut(&token) {
+            let mut watcher = w.borrow_mut();
             watcher.parse_input(&mut self.casters, num_watching);
         }
         else {
@@ -191,7 +193,8 @@ impl Termcastd {
                             // reset these watchers back to the main menu. Everything
                             // will be dropped after the end of the match when the
                             // entry is removed.
-                            for watcher in caster.watchers.iter() {
+                            for w in caster.watchers.iter() {
+                                let watcher = w.borrow();
                                 let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
                             }
                         }
@@ -201,7 +204,7 @@ impl Termcastd {
                 &Client::Watcher => {
                     if let Entry::Occupied(watcher_entry) = self.watchers.entry(token) {
                         {
-                            let watcher = watcher_entry.get();
+                            let watcher = watcher_entry.get().borrow();
                             let res = event_loop.deregister(&watcher.sock);
                         }
                         self.number_watching -= 1;
@@ -263,7 +266,7 @@ impl Termcastd {
                     watcher.show_menu(&self.casters, self.casters.len(), self.watchers.len());
                     let client = Client::Watcher;
                     self.clients.insert(token, client);
-                    self.watchers.insert(token, watcher);
+                    self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
                 }
             }
         }
@@ -315,7 +318,8 @@ impl Handler for Termcastd {
                 }
                 else {
                     let num_watching = self.watchers.len();
-                    if let Some(watcher) = self.watchers.get_mut(&token) {
+                    if let Some(w) = self.watchers.get_mut(&token) {
+                        let mut watcher = w.borrow_mut();
                         watcher.show_menu(&self.casters, self.casters.len(), num_watching);
                     }
                 }
