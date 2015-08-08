@@ -11,6 +11,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
+use std::str;
 
 
 const CASTER: Token = Token(0);
@@ -169,7 +170,28 @@ impl Caster {
                 }
             }
             else {
+                self.handle_auth(&bytes_received);
             }
+        }
+    }
+
+    // The very first bytes sent should be in utf-8:
+    //   hello <name> <password>
+    fn handle_auth(&self, raw_input: &[u8]) {
+        if let Ok(input) = str::from_utf8(raw_input) {
+            if !input.starts_with("hello ") {
+                return;
+            }
+
+            let words: Vec<&str> = input.split(" ").collect();
+            if words[1] == "" {
+                return;
+            }
+
+            // Name is 1 and password is 2.
+        }
+        else {
+            // Invalid utf-8 bytes sent, close the socket!
         }
     }
 }
