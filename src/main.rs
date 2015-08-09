@@ -159,7 +159,7 @@ impl Watcher {
 }
 
 impl Caster {
-    fn parse_input(&mut self) {
+    fn input(&mut self) {
         let mut bytes_received = [0u8; 1024];
         while let Ok(num_bytes) = self.sock.read(&mut bytes_received) {
             // If a name is set then all bytes go straight to the watchers.
@@ -275,7 +275,7 @@ impl Termcastd {
 
     fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Some(caster) = self.casters.get_mut(&token) {
-            caster.parse_input();
+            caster.input();
         }
         else {
             // Got an event for a token with no matching socket.
