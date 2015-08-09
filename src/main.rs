@@ -197,33 +197,14 @@ impl Caster {
 }
 
 impl Termcastd {
-
     fn next_token(&mut self) -> Token {
         let token = Token(self.next_token_id);
         self.next_token_id += 1;
         return token;
     }
 
-    fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
-        if let Some(caster) = self.casters.get_mut(&token) {
-            caster.parse_input();
-        }
-        else {
-            // Got an event for a token with no matching socket.
-        }
-    }
-
-    fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
-        let num_watching = self.watchers.len();
-        if let Some(w) = self.watchers.get_mut(&token) {
-            let mut watcher = w.borrow_mut();
-            watcher.parse_input(&mut self.casters, num_watching);
-        }
-        else {
-            // Got an event for a token with no matching socket.
-        }
-    }
-
+    // Section for Caster and Watcher functions.
+    ////////////////////////////////////
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Entry::Occupied(client) = self.clients.entry(token) {
             match client.get() {
@@ -264,6 +245,8 @@ impl Termcastd {
         }
     }
 
+    // Section for Caster functions.
+    ////////////////////////////////////
     fn new_caster(&mut self, event_loop: &mut EventLoop<Termcastd>) {
         if let Ok(opt) = self.listen_caster.accept() {
             if let Some(sock) = opt {
@@ -290,6 +273,17 @@ impl Termcastd {
         }
     }
 
+    fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        if let Some(caster) = self.casters.get_mut(&token) {
+            caster.parse_input();
+        }
+        else {
+            // Got an event for a token with no matching socket.
+        }
+    }
+
+    // Section for Watcher functions.
+    ////////////////////////////////////
     fn new_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>) {
         if let Ok(opt) = self.listen_watcher.accept() {
             if let Some(sock) = opt {
@@ -314,6 +308,17 @@ impl Termcastd {
                     self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
                 }
             }
+        }
+    }
+
+    fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        let num_watching = self.watchers.len();
+        if let Some(w) = self.watchers.get_mut(&token) {
+            let mut watcher = w.borrow_mut();
+            watcher.parse_input(&mut self.casters, num_watching);
+        }
+        else {
+            // Got an event for a token with no matching socket.
         }
     }
 }
