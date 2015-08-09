@@ -29,6 +29,10 @@ struct Caster {
     watchers: Vec<Rc<RefCell<Watcher>>>,
 }
 
+struct CasterAuth {
+    login: HashMap<String, String>,
+}
+
 struct Watcher {
     offset: usize,
     sock: TcpStream,
@@ -42,6 +46,7 @@ struct Termcastd {
     clients: HashMap<Token, Client>,
     watchers: HashMap<Token, Rc<RefCell<Watcher>>>,
     casters: HashMap<Token, Caster>,
+    caster_auth: CasterAuth,
     next_token_id: usize,
     number_watching: u32,
     number_casting: u32,
@@ -65,6 +70,15 @@ enum WatcherState {
     Disconnecting,
     MainMenu,
     Watching,
+}
+
+
+impl CasterAuth {
+    fn new() -> Self {
+        CasterAuth {
+            login: HashMap::new(),
+        }
+    }
 }
 
 impl Watcher {
@@ -425,6 +439,7 @@ fn main() {
         listen_watcher: listen_watcher,
         clients: HashMap::new(),
         casters: HashMap::new(),
+        caster_auth: CasterAuth::new(),
         watchers: HashMap::new(),
         next_token_id: 2,
         number_watching: 0,
