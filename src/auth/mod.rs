@@ -48,3 +48,39 @@ impl CasterAuth {
         sha256.result_str()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::CasterAuth;
+
+    #[test]
+    fn register() {
+        let mut ca = CasterAuth::new();
+        let name = String::from("foo");
+        let pass = String::from("");
+        assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
+    }
+
+    #[test]
+    fn login() {
+        let mut ca = CasterAuth::new();
+        let name = String::from("foo");
+        let pass = String::from("");
+        ca.login(&name, &pass);
+
+        assert!(ca.login(&name, &pass).is_ok(),
+                "Logging in works.");
+    }
+
+    #[test]
+    fn login_fail() {
+        let mut ca = CasterAuth::new();
+        let name = String::from("foo");
+        let pass = String::from("");
+        ca.login(&name, &pass);
+
+        let new_pass = String::from("x");
+        assert!(ca.login(&name, &new_pass).is_err(),
+                "Login fail with wrong password.");
+    }
+}
