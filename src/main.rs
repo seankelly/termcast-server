@@ -2,6 +2,8 @@ extern crate mio;
 #[macro_use]
 extern crate log;
 
+mod auth;
+
 use mio::*;
 use std::io::Read;
 use std::io::Write;
@@ -12,6 +14,7 @@ use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::rc::Rc;
 use std::str;
+use auth::CasterAuth;
 
 
 const CASTER: Token = Token(0);
@@ -27,10 +30,6 @@ struct Caster {
     token: Token,
     name: Option<String>,
     watchers: Vec<Rc<RefCell<Watcher>>>,
-}
-
-struct CasterAuth {
-    login: HashMap<String, String>,
 }
 
 struct Watcher {
@@ -72,14 +71,6 @@ enum WatcherState {
     Watching,
 }
 
-
-impl CasterAuth {
-    fn new() -> Self {
-        CasterAuth {
-            login: HashMap::new(),
-        }
-    }
-}
 
 impl Watcher {
     fn show_menu(&mut self,
