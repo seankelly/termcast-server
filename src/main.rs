@@ -164,14 +164,18 @@ impl Caster {
         while let Ok(num_bytes) = self.sock.read(&mut bytes_received) {
             // If a name is set then all bytes go straight to the watchers.
             if self.name.is_some() {
-                for w in self.watchers.iter() {
-                    let mut watcher = w.borrow_mut();
-                    watcher.sock.write(&bytes_received);
-                }
+                self.relay_input(&bytes_received);
             }
             else {
                 self.handle_auth(&bytes_received);
             }
+        }
+    }
+
+    fn relay_input(&mut self, input: &[u8]) {
+        for w in self.watchers.iter() {
+            let mut watcher = w.borrow_mut();
+            watcher.sock.write(&input);
         }
     }
 
