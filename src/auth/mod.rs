@@ -60,6 +60,7 @@ mod tests {
         let name = String::from("foo");
         let pass = String::from("");
         assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
+        assert_eq!(ca.logins.len(), 1);
     }
 
     #[test]
@@ -71,6 +72,7 @@ mod tests {
 
         assert!(ca.login(&name, &pass).is_ok(),
                 "Logging in works.");
+        assert_eq!(ca.logins.len(), 1);
     }
 
     #[test]
@@ -83,5 +85,6 @@ mod tests {
         let new_pass = String::from("x");
         assert!(ca.login(&name, &new_pass).is_err(),
                 "Login fail with wrong password.");
+        assert_eq!(ca.logins.len(), 1);
     }
 }
