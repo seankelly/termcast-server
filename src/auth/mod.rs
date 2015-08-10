@@ -64,6 +64,24 @@ mod tests {
     }
 
     #[test]
+    fn register_three() {
+        let mut ca = CasterAuth::new();
+        let name = String::from("foo1");
+        let pass = String::from("pass1");
+        assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
+
+        let name = String::from("foo2");
+        let pass = String::from("pass2");
+        assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
+
+        let name = String::from("foo3");
+        let pass = String::from("pass3");
+        assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
+
+        assert_eq!(ca.logins.len(), 3);
+    }
+
+    #[test]
     fn login() {
         let mut ca = CasterAuth::new();
         let name = String::from("foo");
