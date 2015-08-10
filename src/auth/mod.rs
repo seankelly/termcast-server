@@ -7,7 +7,7 @@ use std::collections::hash_map::Entry;
 
 
 pub struct CasterAuth {
-    login: HashMap<String, String>,
+    login: HashMap<String, [u8; 32]>,
 }
 
 impl CasterAuth {
@@ -24,14 +24,15 @@ impl CasterAuth {
         let name = name.clone();
 
         // Hash the password to get everything to the same length.
-        let hashed = CasterAuth::hash_password(password);
-        let hashed_password = hashed.clone();
+        let mut hashed_password = [0; 32];
+        CasterAuth::hash_password(password, &mut hashed_password);
+        let hashed = hashed_password.clone();
 
         let mut hash_entry = self.login.entry(name).or_insert(hashed);
         let mut diff = 0;
-        for bytes in hashed_password.bytes().zip(hash_entry.bytes()) {
+        for bytes in hashed_password.iter().zip(hash_entry) {
             let (byte_input, byte_entry) = bytes;
-            diff |= byte_input ^ byte_entry;
+            diff |= *byte_input ^ *byte_entry;
         }
 
         if diff == 0 {
@@ -42,10 +43,10 @@ impl CasterAuth {
         }
     }
 
-    fn hash_password(password: &String) -> String {
+    fn hash_password(password: &String, output: &mut [u8]) {
         let mut sha256 = Sha256::new();
         sha256.input(password.as_bytes());
-        sha256.result_str()
+        sha256.result(output);
     }
 }
 
