@@ -7,13 +7,13 @@ use std::collections::hash_map::Entry;
 
 
 pub struct CasterAuth {
-    login: HashMap<String, [u8; 32]>,
+    logins: HashMap<String, [u8; 32]>,
 }
 
 impl CasterAuth {
     pub fn new() -> Self {
         CasterAuth {
-            login: HashMap::new(),
+            logins: HashMap::new(),
         }
     }
 
@@ -28,7 +28,7 @@ impl CasterAuth {
         CasterAuth::hash_password(password, &mut hashed_password);
         let hashed = hashed_password.clone();
 
-        let mut hash_entry = self.login.entry(name).or_insert(hashed);
+        let mut hash_entry = self.logins.entry(name).or_insert(hashed);
         let mut diff = 0;
         for bytes in hashed_password.iter().zip(hash_entry) {
             let (byte_input, byte_entry) = bytes;
