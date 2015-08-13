@@ -4,6 +4,7 @@ extern crate log;
 
 mod auth;
 mod ring;
+mod term;
 
 use mio::*;
 use std::io::Read;
@@ -387,11 +388,6 @@ impl Handler for Termcastd {
             },
         }
     }
-}
-
-mod term {
-    pub fn clear_screen() -> &'static str { "\x1b[2J" }
-    pub fn reset_cursor() -> &'static str { "\x1b[H" }
 }
 
 
