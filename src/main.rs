@@ -3,6 +3,7 @@ extern crate mio;
 extern crate log;
 
 mod auth;
+mod ring;
 
 use mio::*;
 use std::io::Read;
@@ -15,6 +16,7 @@ use std::collections::hash_map::Entry;
 use std::rc::Rc;
 use std::str;
 use auth::CasterAuth;
+use ring::RingBuffer;
 
 
 const CASTER: Token = Token(0);
