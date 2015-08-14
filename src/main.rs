@@ -7,13 +7,14 @@ mod ring;
 mod term;
 
 use mio::*;
+use std::io::Error;
 use std::io::Read;
 use std::io::Write;
-use mio::tcp::TcpListener;
-use mio::tcp::TcpStream;
+use mio::tcp::{TcpListener, TcpStream};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str;
 use auth::CasterAuth;
@@ -40,6 +41,11 @@ struct Watcher {
     sock: TcpStream,
     token: Token,
     state: WatcherState,
+}
+
+struct TermcastConfig {
+    caster: SocketAddr,
+    watcher: SocketAddr,
 }
 
 struct Termcastd {
@@ -390,40 +396,11 @@ impl Handler for Termcastd {
     }
 }
 
+fn termcastd(config: &TermcastConfig) -> Result<Termcastd, Error> {
+    let listen_caster = try!(TcpListener::bind(&config.caster));
+    let listen_watcher = try!(TcpListener::bind(&config.watcher));
 
-fn main() {
-    println!("Listening on caster port.");
-    let caster_addr = "127.0.0.1:31337".parse();
-    if let Err(msg) = caster_addr {
-        panic!("Couldn't parse caster address: {:?}", msg);
-    }
-    let caster_addr = caster_addr.unwrap();
-
-    let listen_caster = TcpListener::bind(&caster_addr);
-    if let Err(msg) = listen_caster {
-        panic!("Unable to listen on caster port: {:?}", msg);
-    }
-    let listen_caster = listen_caster.unwrap();
-
-    println!("Listening on watcher port.");
-    let watcher_addr = "127.0.0.1:2300".parse();
-    if let Err(msg) = watcher_addr {
-        panic!("Couldn't parse watcher address: {:?}", msg);
-    }
-    let watcher_addr = watcher_addr.unwrap();
-
-    let listen_watcher = TcpListener::bind(&watcher_addr);
-    if let Err(msg) = listen_watcher {
-        panic!("Couldn't listen on watcher address: {:?}", msg);
-    }
-    let listen_watcher = listen_watcher.unwrap();
-
-    println!("Registering listeners with event loop.");
-    let mut event_loop = EventLoop::new().unwrap();
-    event_loop.register(&listen_caster, CASTER).unwrap();
-    event_loop.register(&listen_watcher, WATCHER).unwrap();
-
-    let mut termcastd = Termcastd {
+    Ok(Termcastd {
         listen_caster: listen_caster,
         listen_watcher: listen_watcher,
         clients: HashMap::new(),
@@ -433,6 +410,22 @@ fn main() {
         next_token_id: 2,
         number_watching: 0,
         number_casting: 0,
+    })
+}
+
+
+fn main() {
+    let tc_config = TermcastConfig {
+        caster: "127.0.0.1:31337".parse().unwrap(),
+        watcher: "127.0.0.1:2300".parse().unwrap(),
     };
-    event_loop.run(&mut termcastd).unwrap();
+
+    if let Ok(mut termcastd) = termcastd(&tc_config) {
+        let mut event_loop = EventLoop::new().unwrap();
+        event_loop.register(&termcastd.listen_caster, CASTER).unwrap();
+        event_loop.register(&termcastd.listen_watcher, WATCHER).unwrap();
+        event_loop.run(&mut termcastd).unwrap();
+    }
+    else {
+    }
 }
