@@ -433,4 +433,33 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use super::TermcastConfig;
+    use super::Termcastd;
+    use super::termcastd;
+
+    use mio::tcp::{TcpListener, TcpStream};
+
+    #[test]
+    fn listen() {
+        let config = TermcastConfig {
+            caster: "127.0.0.1:0".parse().unwrap(),
+            watcher: "127.0.0.1:0".parse().unwrap(),
+        };
+
+        assert!(termcastd(&config).is_ok(), "Can bind both ports.");
+    }
+
+    #[test]
+    fn bind_taken() {
+        let sock = "127.0.0.1:0".parse().unwrap();
+        let l = TcpListener::bind(&sock).unwrap();
+
+        let config = TermcastConfig {
+            caster: l.local_addr().unwrap(),
+            watcher: "127.0.0.1:0".parse().unwrap(),
+        };
+
+        let tc = termcastd(&config);
+        assert!(tc.is_err(), "Error returned when port in use.");
+    }
 }
