@@ -3,6 +3,7 @@ extern crate mio;
 extern crate log;
 
 mod auth;
+mod config;
 mod ring;
 mod term;
 
@@ -14,10 +15,10 @@ use mio::tcp::{TcpListener, TcpStream};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
-use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str;
 use auth::CasterAuth;
+use config::TermcastConfig;
 use ring::RingBuffer;
 
 
@@ -41,11 +42,6 @@ struct Watcher {
     sock: TcpStream,
     token: Token,
     state: WatcherState,
-}
-
-struct TermcastConfig {
-    caster: SocketAddr,
-    watcher: SocketAddr,
 }
 
 struct Termcastd {
@@ -433,7 +429,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::TermcastConfig;
+    use super::config::TermcastConfig;
     use super::Termcastd;
     use super::termcastd;
 
