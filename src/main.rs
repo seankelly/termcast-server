@@ -471,8 +471,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::config::TermcastConfig;
-    use super::Termcastd;
-    use super::termcastd;
+    use super::TermcastServer;
 
     use mio::tcp::{TcpListener, TcpStream};
 
@@ -483,7 +482,7 @@ mod tests {
             watcher: "127.0.0.1:0".parse().unwrap(),
         };
 
-        assert!(termcastd(&config).is_ok(), "Can bind both ports.");
+        assert!(TermcastServer::new(config).is_ok(), "Can bind both ports.");
     }
 
     #[test]
@@ -496,7 +495,7 @@ mod tests {
             watcher: "127.0.0.1:0".parse().unwrap(),
         };
 
-        let tc = termcastd(&config);
+        let tc = TermcastServer::new(config);
         assert!(tc.is_err(), "Error returned when port in use.");
     }
 }
