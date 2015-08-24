@@ -216,6 +216,20 @@ impl Caster {
 }
 
 impl Termcastd {
+    fn new(listen_caster: TcpListener, listen_watcher: TcpListener) -> Self {
+        Termcastd {
+            listen_caster: listen_caster,
+            listen_watcher: listen_watcher,
+            clients: HashMap::new(),
+            casters: HashMap::new(),
+            caster_auth: CasterAuth::new(),
+            watchers: HashMap::new(),
+            next_token_id: 2,
+            number_watching: 0,
+            number_casting: 0,
+        }
+    }
+
     fn next_token(&mut self) -> Token {
         let token = Token(self.next_token_id);
         self.next_token_id += 1;
@@ -393,22 +407,6 @@ impl Handler for Termcastd {
                     }
                 }
             },
-        }
-    }
-}
-
-impl Termcastd {
-    fn new(listen_caster: TcpListener, listen_watcher: TcpListener) -> Self {
-        Termcastd {
-            listen_caster: listen_caster,
-            listen_watcher: listen_watcher,
-            clients: HashMap::new(),
-            casters: HashMap::new(),
-            caster_auth: CasterAuth::new(),
-            watchers: HashMap::new(),
-            next_token_id: 2,
-            number_watching: 0,
-            number_casting: 0,
         }
     }
 }
