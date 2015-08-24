@@ -397,6 +397,22 @@ impl Handler for Termcastd {
     }
 }
 
+impl Termcastd {
+    fn new(listen_caster: TcpListener, listen_watcher: TcpListener) -> Self {
+        Termcastd {
+            listen_caster: listen_caster,
+            listen_watcher: listen_watcher,
+            clients: HashMap::new(),
+            casters: HashMap::new(),
+            caster_auth: CasterAuth::new(),
+            watchers: HashMap::new(),
+            next_token_id: 2,
+            number_watching: 0,
+            number_casting: 0,
+        }
+    }
+}
+
 
 impl TermcastServer {
     fn new(config: TermcastConfig) -> Result<Self, Error> {
@@ -404,17 +420,7 @@ impl TermcastServer {
         let listen_watcher = try!(TcpListener::bind(&config.watcher));
 
         Ok(TermcastServer {
-            termcastd: Termcastd {
-                listen_caster: listen_caster,
-                listen_watcher: listen_watcher,
-                clients: HashMap::new(),
-                casters: HashMap::new(),
-                caster_auth: CasterAuth::new(),
-                watchers: HashMap::new(),
-                next_token_id: 2,
-                number_watching: 0,
-                number_casting: 0,
-            },
+            termcastd: Termcastd::new(listen_caster, listen_watcher),
             config: config,
         })
     }
