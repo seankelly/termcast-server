@@ -2,8 +2,9 @@ extern crate mio;
 #[macro_use]
 extern crate log;
 
+pub mod config;
+
 mod auth;
-mod config;
 mod ring;
 mod term;
 
@@ -56,7 +57,7 @@ struct Termcastd {
     number_casting: u32,
 }
 
-struct TermcastServer {
+pub struct TermcastServer {
     termcastd: Termcastd,
     config: TermcastConfig,
 }
@@ -413,7 +414,7 @@ impl Handler for Termcastd {
 
 
 impl TermcastServer {
-    fn new(config: TermcastConfig) -> Result<Self, Error> {
+    pub fn new(config: TermcastConfig) -> Result<Self, Error> {
         let listen_caster = try!(TcpListener::bind(&config.caster));
         let listen_watcher = try!(TcpListener::bind(&config.watcher));
 
@@ -423,57 +424,10 @@ impl TermcastServer {
         })
     }
 
-    fn run(&mut self) {
+    pub fn run(&mut self) {
         let mut event_loop = EventLoop::new().unwrap();
         event_loop.register(&self.termcastd.listen_caster, CASTER).unwrap();
         event_loop.register(&self.termcastd.listen_watcher, WATCHER).unwrap();
         event_loop.run(&mut self.termcastd).unwrap();
-    }
-}
-
-
-fn main() {
-    let tc_config = TermcastConfig {
-        caster: "127.0.0.1:31337".parse().unwrap(),
-        watcher: "127.0.0.1:2300".parse().unwrap(),
-    };
-
-    if let Ok(mut termcast) = TermcastServer::new(tc_config) {
-        termcast.run();
-    }
-    else {
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    use super::config::TermcastConfig;
-    use super::TermcastServer;
-
-    use mio::tcp::{TcpListener, TcpStream};
-
-    #[test]
-    fn listen() {
-        let config = TermcastConfig {
-            caster: "127.0.0.1:0".parse().unwrap(),
-            watcher: "127.0.0.1:0".parse().unwrap(),
-        };
-
-        assert!(TermcastServer::new(config).is_ok(), "Can bind both ports.");
-    }
-
-    #[test]
-    fn bind_taken() {
-        let sock = "127.0.0.1:0".parse().unwrap();
-        let l = TcpListener::bind(&sock).unwrap();
-
-        let config = TermcastConfig {
-            caster: l.local_addr().unwrap(),
-            watcher: "127.0.0.1:0".parse().unwrap(),
-        };
-
-        let tc = TermcastServer::new(config);
-        assert!(tc.is_err(), "Error returned when port in use.");
     }
 }
