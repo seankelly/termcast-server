@@ -56,6 +56,11 @@ struct Termcastd {
     number_casting: u32,
 }
 
+struct TermcastServer {
+    termcastd: Termcastd,
+    config: TermcastConfig,
+}
+
 
 enum TermcastdMessage {
     CasterDisconnected(Token),
@@ -389,6 +394,36 @@ impl Handler for Termcastd {
                 }
             },
         }
+    }
+}
+
+
+impl TermcastServer {
+    fn new(config: TermcastConfig) -> Result<Self, Error> {
+        let listen_caster = try!(TcpListener::bind(&config.caster));
+        let listen_watcher = try!(TcpListener::bind(&config.watcher));
+
+        Ok(TermcastServer {
+            termcastd: Termcastd {
+                listen_caster: listen_caster,
+                listen_watcher: listen_watcher,
+                clients: HashMap::new(),
+                casters: HashMap::new(),
+                caster_auth: CasterAuth::new(),
+                watchers: HashMap::new(),
+                next_token_id: 2,
+                number_watching: 0,
+                number_casting: 0,
+            },
+            config: config,
+        })
+    }
+
+    fn run(&mut self) {
+        let mut event_loop = EventLoop::new().unwrap();
+        event_loop.register(&self.termcastd.listen_caster, CASTER).unwrap();
+        event_loop.register(&self.termcastd.listen_watcher, WATCHER).unwrap();
+        event_loop.run(&mut self.termcastd).unwrap();
     }
 }
 
