@@ -433,23 +433,6 @@ impl TermcastServer {
     }
 }
 
-fn termcastd(config: &TermcastConfig) -> Result<Termcastd, Error> {
-    let listen_caster = try!(TcpListener::bind(&config.caster));
-    let listen_watcher = try!(TcpListener::bind(&config.watcher));
-
-    Ok(Termcastd {
-        listen_caster: listen_caster,
-        listen_watcher: listen_watcher,
-        clients: HashMap::new(),
-        casters: HashMap::new(),
-        caster_auth: CasterAuth::new(),
-        watchers: HashMap::new(),
-        next_token_id: 2,
-        number_watching: 0,
-        number_casting: 0,
-    })
-}
-
 
 fn main() {
     let tc_config = TermcastConfig {
@@ -457,11 +440,8 @@ fn main() {
         watcher: "127.0.0.1:2300".parse().unwrap(),
     };
 
-    if let Ok(mut termcastd) = termcastd(&tc_config) {
-        let mut event_loop = EventLoop::new().unwrap();
-        event_loop.register(&termcastd.listen_caster, CASTER).unwrap();
-        event_loop.register(&termcastd.listen_watcher, WATCHER).unwrap();
-        event_loop.run(&mut termcastd).unwrap();
+    if let Ok(mut termcast) = TermcastServer::new(tc_config) {
+        termcast.run();
     }
     else {
     }
