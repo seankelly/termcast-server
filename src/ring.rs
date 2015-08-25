@@ -69,6 +69,11 @@ impl RingBuffer {
     pub fn len(&self) -> usize {
         self.buffer.len()
     }
+
+    pub fn clear(&mut self) {
+        self.buffer.clear();
+        self.index = 0;
+    }
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -146,5 +151,20 @@ mod tests {
 
         assert!(ring.add_no_wraparound(&bytes[4..5]).is_err(), "Failed to add fifth byte.");
         assert_eq!(ring.len(), 4);
+    }
+
+    #[test]
+    fn clear() {
+        let mut ring = RingBuffer::new(4);
+        let bytes = &[0, 1, 2, 3, 4, 5, 6];
+        ring.add(bytes);
+        assert_eq!(ring.len(), 4);
+        ring.clear();
+        assert_eq!(ring.len(), 0);
+
+        ring.add(&bytes[0..3]);
+        assert_eq!(ring.len(), 3);
+        ring.clear();
+        assert_eq!(ring.len(), 0);
     }
 }
