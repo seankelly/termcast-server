@@ -136,7 +136,7 @@ mod tests {
     }
 
     #[test]
-    fn add_no_wraparound_limit() {
+    fn add_no_wraparound() {
         let mut ring = RingBuffer::new(4);
         let bytes = &[0, 1, 2, 3, 4];
 
