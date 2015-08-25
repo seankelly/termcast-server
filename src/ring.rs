@@ -65,6 +65,10 @@ impl RingBuffer {
             buffer: &self.buffer,
         }
     }
+
+    pub fn len(&self) -> usize {
+        self.buffer.len()
+    }
 }
 
 impl<'a> Iterator for Iter<'a> {
@@ -101,27 +105,27 @@ mod tests {
         let bytes = &[0, 1, 2, 3, 4, 5, 6];
 
         ring.add(&bytes[0..1]);
-        assert_eq!(ring.buffer.len(), 1);
+        assert_eq!(ring.len(), 1);
         let buf: Vec<u8> = ring.iter().collect();
         assert_eq!(buf, vec![0]);
 
         ring.add(&bytes[1..3]);
-        assert_eq!(ring.buffer.len(), 3);
+        assert_eq!(ring.len(), 3);
         let buf: Vec<u8> = ring.iter().collect();
         assert_eq!(buf, vec![0, 1, 2]);
 
         ring.add(&bytes[3..4]);
-        assert_eq!(ring.buffer.len(), 4);
+        assert_eq!(ring.len(), 4);
         let buf: Vec<u8> = ring.iter().collect();
         assert_eq!(buf, vec![0, 1, 2, 3]);
 
         ring.add(&bytes[4..6]);
-        assert_eq!(ring.buffer.len(), 4);
+        assert_eq!(ring.len(), 4);
         let buf: Vec<u8> = ring.iter().collect();
         assert_eq!(buf, vec![2, 3, 4, 5]);
 
         ring.add(bytes);
-        assert_eq!(ring.buffer.len(), 4);
+        assert_eq!(ring.len(), 4);
         let buf: Vec<u8> = ring.iter().collect();
         assert_eq!(buf, vec![3, 4, 5, 6]);
     }
@@ -132,15 +136,15 @@ mod tests {
         let bytes = &[0, 1, 2, 3, 4];
 
         assert!(ring.add_no_wraparound(&bytes[0..1]).is_ok(), "Append first byte.");
-        assert_eq!(ring.buffer.len(), 1);
+        assert_eq!(ring.len(), 1);
 
         assert!(ring.add_no_wraparound(&bytes[1..3]).is_ok(), "Append second and third bytes.");
-        assert_eq!(ring.buffer.len(), 3);
+        assert_eq!(ring.len(), 3);
 
         assert!(ring.add_no_wraparound(&bytes[3..4]).is_ok(), "Append fourth byte.");
-        assert_eq!(ring.buffer.len(), 4);
+        assert_eq!(ring.len(), 4);
 
         assert!(ring.add_no_wraparound(&bytes[4..5]).is_err(), "Failed to add fifth byte.");
-        assert_eq!(ring.buffer.len(), 4);
+        assert_eq!(ring.len(), 4);
     }
 }
