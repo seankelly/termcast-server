@@ -35,6 +35,7 @@ struct Caster {
     sock: TcpStream,
     token: Token,
     name: Option<String>,
+    cast_buffer: RingBuffer,
     watchers: Vec<Rc<RefCell<Watcher>>>,
 }
 
@@ -290,6 +291,7 @@ impl Termcastd {
                     sock: sock,
                     token: token,
                     name: None,
+                    cast_buffer: RingBuffer::new(90_000),
                     watchers: Vec::new(),
                 };
                 let res = event_loop.register_opt(
