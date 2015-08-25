@@ -67,6 +67,7 @@ enum TermcastdMessage {
     CasterDisconnected(Token),
     WatcherDisconnected(Token),
     AddWatcher(Token, usize),
+    Quit,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -408,6 +409,9 @@ impl Handler for Termcastd {
                     }
                 }
             },
+            TermcastdMessage::Quit => {
+                event_loop.shutdown();
+            }
         }
     }
 }
