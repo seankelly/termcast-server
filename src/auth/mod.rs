@@ -3,7 +3,6 @@ extern crate crypto;
 use self::crypto::digest::Digest;
 use self::crypto::sha2::Sha256;
 use std::collections::HashMap;
-use std::collections::hash_map::Entry;
 
 
 pub struct CasterAuth {
