@@ -177,7 +177,7 @@ impl Watcher {
 }
 
 impl Caster {
-    fn input(&mut self) {
+    fn input(&mut self, caster_auth: &mut CasterAuth) {
         let mut bytes_received = [0u8; 1024];
         while let Ok(num_bytes) = self.sock.read(&mut bytes_received) {
             // If a name is set then all bytes go straight to the watchers.
@@ -185,7 +185,7 @@ impl Caster {
                 self.relay_input(&bytes_received);
             }
             else {
-                self.handle_auth(&bytes_received);
+                self.handle_auth(&bytes_received, caster_auth);
             }
         }
     }
@@ -199,21 +199,55 @@ impl Caster {
 
     // The very first bytes sent should be in utf-8:
     //   hello <name> <password>
-    fn handle_auth(&self, raw_input: &[u8]) {
-        if let Ok(input) = str::from_utf8(raw_input) {
-            if !input.starts_with("hello ") {
-                return;
-            }
+    fn handle_auth(&mut self, raw_input: &[u8], caster_auth: &mut CasterAuth) {
+        // Limit the buffer used for the authentication to 1024 bytes. This is to limit a DoS and
+        // reduce the possibility of getting into an unknown state.
+        let mut auth_buffer = [0; 1024];
 
-            let words: Vec<&str> = input.split(" ").collect();
-            if words[1] == "" {
-                return;
-            }
+        if raw_input.len() + self.cast_buffer.len() > auth_buffer.len() {
+            // TODO: Return error.
+            return;
+        }
 
-            // Name is 1 and password is 2.
+        for el in self.cast_buffer.iter().enumerate() {
+            let (idx, byte) = el;
+            auth_buffer[idx] = byte;
+        }
+
+        let offset = self.cast_buffer.len();
+        for el in raw_input.iter().enumerate() {
+            let (idx, byte) = el;
+            auth_buffer[idx+offset] = *byte;
+        }
+
+        // Try to find a newline as that marks the end of the opening message.
+        if let Some(newline_idx) = auth_buffer.iter().position(|b| *b == 10) {
+            if let Ok(input) = str::from_utf8(&auth_buffer[..newline_idx]) {
+                let parts: Vec<&str> = input.splitn(3, ' ').collect();
+                if parts[0] != "hello" {
+                    // TODO: Return error.
+                    return;
+                }
+
+                let name = String::from(parts[1]);
+                let password = String::from(parts[2]);
+                if let Ok(login) = caster_auth.login(&name, &password) {
+                    // TODO: Return Ok.
+                    return;
+                }
+                else {
+                    // TODO: Return error.
+                    return;
+                }
+            }
+            else {
+                // TODO: Return error.
+            }
         }
         else {
-            // Invalid utf-8 bytes sent, close the socket!
+            // No new line found so add all of the data to the ring buffer. Return an "error"
+            // indicating not authenticated yet.
+            self.cast_buffer.add_no_wraparound(&raw_input);
         }
     }
 }
@@ -312,7 +346,7 @@ impl Termcastd {
 
     fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Some(caster) = self.casters.get_mut(&token) {
-            caster.input();
+            caster.input(&mut self.caster_auth);
         }
         else {
             // Got an event for a token with no matching socket.
