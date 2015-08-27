@@ -229,8 +229,9 @@ impl Caster {
                     return;
                 }
 
-                let name = String::from(parts[1]);
-                let password = String::from(parts[2]);
+                let name = parts[1];
+                // Allow the password field to be empty. Default to the empty string.
+                let password = if parts.len() >= 3 { parts[2] } else { "" };
                 if let Ok(login) = caster_auth.login(&name, &password) {
                     // TODO: Return Ok.
                     return;

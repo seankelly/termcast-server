@@ -19,8 +19,8 @@ impl CasterAuth {
     // Given a name and password, check the list of accounts. If the name is not registered,
     // register it. If the name is registered, check the password; if the password does not match
     // then return an error.
-    pub fn login(&mut self, name: &String, password: &String) -> Result<(), ()> {
-        let name = name.clone();
+    pub fn login(&mut self, name: &str, password: &str) -> Result<(), ()> {
+        let name = String::from(name);
 
         // Hash the password to get everything to the same length.
         let mut hashed_password = [0; 32];
@@ -42,7 +42,7 @@ impl CasterAuth {
         }
     }
 
-    fn hash_password(password: &String, output: &mut [u8]) {
+    fn hash_password(password: &str, output: &mut [u8]) {
         let mut sha256 = Sha256::new();
         sha256.input(password.as_bytes());
         sha256.result(output);
@@ -56,8 +56,8 @@ mod tests {
     #[test]
     fn register() {
         let mut ca = CasterAuth::new();
-        let name = String::from("foo");
-        let pass = String::from("");
+        let name = "foo";
+        let pass = "";
         assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
         assert_eq!(ca.logins.len(), 1);
     }
@@ -65,16 +65,16 @@ mod tests {
     #[test]
     fn register_three() {
         let mut ca = CasterAuth::new();
-        let name = String::from("foo1");
-        let pass = String::from("pass1");
+        let name = "foo1";
+        let pass = "pass1";
         assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
 
-        let name = String::from("foo2");
-        let pass = String::from("pass2");
+        let name = "foo2";
+        let pass = "pass2";
         assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
 
-        let name = String::from("foo3");
-        let pass = String::from("pass3");
+        let name = "foo3";
+        let pass = "pass3";
         assert!(ca.login(&name, &pass).is_ok(), "Can register new name.");
 
         assert_eq!(ca.logins.len(), 3);
@@ -83,8 +83,8 @@ mod tests {
     #[test]
     fn login() {
         let mut ca = CasterAuth::new();
-        let name = String::from("foo");
-        let pass = String::from("");
+        let name = "foo";
+        let pass = "";
         ca.login(&name, &pass);
 
         assert!(ca.login(&name, &pass).is_ok(),
@@ -95,11 +95,11 @@ mod tests {
     #[test]
     fn login_fail() {
         let mut ca = CasterAuth::new();
-        let name = String::from("foo");
-        let pass = String::from("");
+        let name = "foo";
+        let pass = "";
         ca.login(&name, &pass);
 
-        let new_pass = String::from("x");
+        let new_pass = "x";
         assert!(ca.login(&name, &new_pass).is_err(),
                 "Login fail with wrong password.");
         assert_eq!(ca.logins.len(), 1);
