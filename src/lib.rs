@@ -61,6 +61,7 @@ struct Termcastd {
 pub struct TermcastServer {
     termcastd: Termcastd,
     config: TermcastConfig,
+    event_loop: EventLoop<Termcastd>,
 }
 
 
@@ -468,17 +469,19 @@ impl TermcastServer {
     pub fn new(config: TermcastConfig) -> Result<Self, Error> {
         let listen_caster = try!(TcpListener::bind(&config.caster));
         let listen_watcher = try!(TcpListener::bind(&config.watcher));
+        let termcastd = Termcastd::new(listen_caster, listen_watcher);
+        let mut event_loop = EventLoop::new().unwrap();
+        event_loop.register(&termcastd.listen_caster, CASTER).unwrap();
+        event_loop.register(&termcastd.listen_watcher, WATCHER).unwrap();
 
         Ok(TermcastServer {
-            termcastd: Termcastd::new(listen_caster, listen_watcher),
+            termcastd: termcastd,
             config: config,
+            event_loop: event_loop,
         })
     }
 
     pub fn run(&mut self) {
-        let mut event_loop = EventLoop::new().unwrap();
-        event_loop.register(&self.termcastd.listen_caster, CASTER).unwrap();
-        event_loop.register(&self.termcastd.listen_watcher, WATCHER).unwrap();
-        event_loop.run(&mut self.termcastd).unwrap();
+        self.event_loop.run(&mut self.termcastd).unwrap();
     }
 }
