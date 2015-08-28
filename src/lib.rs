@@ -16,8 +16,10 @@ use mio::tcp::{TcpListener, TcpStream};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
+use std::net::SocketAddr;
 use std::rc::Rc;
 use std::str;
+
 use auth::CasterAuth;
 use config::TermcastConfig;
 use ring::RingBuffer;
@@ -487,5 +489,11 @@ impl TermcastServer {
 
     pub fn get_channel(&mut self) -> Sender<TermcastdMessage> {
         self.event_loop.channel()
+    }
+
+    pub fn get_socket_addrs(&self) -> Result<(SocketAddr, SocketAddr), Error> {
+        let caster_addr = try!(self.termcastd.listen_caster.local_addr());
+        let watcher_addr = try!(self.termcastd.listen_watcher.local_addr());
+        Ok((caster_addr, watcher_addr))
     }
 }
