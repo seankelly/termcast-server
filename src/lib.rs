@@ -224,7 +224,12 @@ impl Caster {
         if let Some(newline_idx) = auth_buffer.iter().position(|b| *b == 10) {
             if let Ok(input) = str::from_utf8(&auth_buffer[..newline_idx]) {
                 let parts: Vec<&str> = input.splitn(3, ' ').collect();
-                if parts[0] != "hello" {
+
+                if parts.len() < 2 {
+                    // TODO: Return error.
+                    return;
+                }
+                else if parts[0] != "hello" {
                     // TODO: Return error.
                     return;
                 }
