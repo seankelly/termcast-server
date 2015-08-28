@@ -65,7 +65,7 @@ pub struct TermcastServer {
 }
 
 
-enum TermcastdMessage {
+pub enum TermcastdMessage {
     CasterDisconnected(Token),
     WatcherDisconnected(Token),
     AddWatcher(Token, usize),
@@ -483,5 +483,9 @@ impl TermcastServer {
 
     pub fn run(&mut self) {
         self.event_loop.run(&mut self.termcastd).unwrap();
+    }
+
+    pub fn get_channel(&mut self) -> Sender<TermcastdMessage> {
+        self.event_loop.channel()
     }
 }
