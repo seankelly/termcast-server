@@ -71,6 +71,15 @@ enum TermcastdMessage {
     Quit,
 }
 
+enum AuthResults {
+    InvalidLogin,
+    MissingHello,
+    NotEnoughParts,
+    TooLong,
+    TryAgain,
+    Utf8Error,
+}
+
 #[derive(Clone, Copy, Debug)]
 enum Client {
     Caster,
@@ -185,7 +194,7 @@ impl Caster {
                 self.relay_input(&bytes_received);
             }
             else {
-                self.handle_auth(&bytes_received, caster_auth);
+                let auth = self.handle_auth(&bytes_received, caster_auth);
             }
         }
     }
@@ -199,14 +208,13 @@ impl Caster {
 
     // The very first bytes sent should be in utf-8:
     //   hello <name> <password>
-    fn handle_auth(&mut self, raw_input: &[u8], caster_auth: &mut CasterAuth) {
+    fn handle_auth(&mut self, raw_input: &[u8], caster_auth: &mut CasterAuth) -> Result<(), AuthResults> {
         // Limit the buffer used for the authentication to 1024 bytes. This is to limit a DoS and
         // reduce the possibility of getting into an unknown state.
         let mut auth_buffer = [0; 1024];
 
         if raw_input.len() + self.cast_buffer.len() > auth_buffer.len() {
-            // TODO: Return error.
-            return;
+            return Err(AuthResults::TooLong);
         }
 
         for el in self.cast_buffer.iter().enumerate() {
@@ -226,34 +234,31 @@ impl Caster {
                 let parts: Vec<&str> = input.splitn(3, ' ').collect();
 
                 if parts.len() < 2 {
-                    // TODO: Return error.
-                    return;
+                    return Err(AuthResults::NotEnoughParts);
                 }
                 else if parts[0] != "hello" {
-                    // TODO: Return error.
-                    return;
+                    return Err(AuthResults::MissingHello);
                 }
 
                 let name = parts[1];
                 // Allow the password field to be empty. Default to the empty string.
                 let password = if parts.len() >= 3 { parts[2] } else { "" };
                 if let Ok(login) = caster_auth.login(&name, &password) {
-                    // TODO: Return Ok.
-                    return;
+                    return Ok(());
                 }
                 else {
-                    // TODO: Return error.
-                    return;
+                    return Err(AuthResults::InvalidLogin);
                 }
             }
             else {
-                // TODO: Return error.
+                return Err(AuthResults::Utf8Error);
             }
         }
         else {
             // No new line found so add all of the data to the ring buffer. Return an "error"
             // indicating not authenticated yet.
             self.cast_buffer.add_no_wraparound(&raw_input);
+            return Err(AuthResults::TryAgain);
         }
     }
 }
