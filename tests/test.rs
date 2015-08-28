@@ -1,9 +1,15 @@
 extern crate mio;
 extern crate termcastd;
 
+use std::thread;
+use std::net::SocketAddr;
+use std::sync::mpsc::channel;
+
 use termcastd::config::TermcastConfig;
 use termcastd::TermcastServer;
+use termcastd::TermcastdMessage;
 
+use mio::Sender;
 use mio::tcp::{TcpListener, TcpStream};
 
 #[test]
@@ -28,4 +34,37 @@ fn bind_taken() {
 
     let tc = TermcastServer::new(config);
     assert!(tc.is_err(), "Error returned when port in use.");
+}
+
+#[test]
+fn threaded_termcastd() {
+    let (thd, ev_channel, _caster_addr, _watcher_addr) = termcastd_thread();
+
+    ev_channel.send(TermcastdMessage::Quit).unwrap();
+    thd.join().unwrap();
+}
+
+
+fn make_termcastd() -> TermcastServer {
+    let config = TermcastConfig {
+        caster: "127.0.0.1:0".parse().unwrap(),
+        watcher: "127.0.0.1:0".parse().unwrap(),
+    };
+
+    TermcastServer::new(config).unwrap()
+}
+
+fn termcastd_thread() -> (thread::JoinHandle<()>, Sender<TermcastdMessage>, SocketAddr, SocketAddr) {
+    let (tx, rx) = channel();
+
+    let thd = thread::spawn(move || {
+        let mut tc = make_termcastd();
+        let (caster_addr, watcher_addr) = tc.get_socket_addrs().unwrap();
+        tx.send((tc.get_channel(), caster_addr, watcher_addr)).unwrap();
+        tc.run();
+    });
+
+    let (ev_channel, caster_addr, watcher_addr) = rx.recv().unwrap();
+
+    return (thd, ev_channel, caster_addr, watcher_addr);
 }
