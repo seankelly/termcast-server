@@ -189,7 +189,7 @@ impl Watcher {
 }
 
 impl Caster {
-    fn input(&mut self, caster_auth: &mut CasterAuth) {
+    fn input(&mut self, caster_auth: &mut CasterAuth) -> Result<(), ()> {
         let mut bytes_received = [0u8; 1024];
         while let Ok(num_bytes) = self.sock.read(&mut bytes_received) {
             // If a name is set then all bytes go straight to the watchers.
@@ -197,9 +197,14 @@ impl Caster {
                 self.relay_input(&bytes_received);
             }
             else {
-                let auth = self.handle_auth(&bytes_received, caster_auth);
+                if let Ok(auth) = self.handle_auth(&bytes_received, caster_auth) {
+                }
+                else {
+                }
             }
         }
+
+        Ok(())
     }
 
     fn relay_input(&mut self, input: &[u8]) {
