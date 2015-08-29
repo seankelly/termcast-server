@@ -216,7 +216,7 @@ impl Caster {
 
     // The very first bytes sent should be in utf-8:
     //   hello <name> <password>
-    fn handle_auth(&mut self, raw_input: &[u8], caster_auth: &mut CasterAuth) -> Result<(), AuthResults> {
+    fn handle_auth(&mut self, raw_input: &[u8], caster_auth: &mut CasterAuth) -> Result<usize, AuthResults> {
         // Limit the buffer used for the authentication to 1024 bytes. This is to limit a DoS and
         // reduce the possibility of getting into an unknown state.
         let mut auth_buffer = [0; 1024];
@@ -252,7 +252,7 @@ impl Caster {
                 // Allow the password field to be empty. Default to the empty string.
                 let password = if parts.len() >= 3 { parts[2] } else { "" };
                 if let Ok(login) = caster_auth.login(&name, &password) {
-                    return Ok(());
+                    return Ok(newline_idx);
                 }
                 else {
                     return Err(AuthResults::InvalidLogin);
