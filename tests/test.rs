@@ -2,6 +2,7 @@ extern crate mio;
 extern crate termcastd;
 
 use std::thread;
+use std::io::Write;
 use std::net::SocketAddr;
 use std::sync::mpsc::channel;
 
@@ -66,4 +67,14 @@ fn termcastd_thread() -> (thread::JoinHandle<()>, Sender<TermcastdMessage>, Sock
     let (ev_channel, caster_addr, watcher_addr) = rx.recv().unwrap();
 
     return (thd, ev_channel, caster_addr, watcher_addr);
+}
+
+fn make_caster(addr: &SocketAddr) -> TcpStream {
+    TcpStream::connect(addr).unwrap()
+}
+
+fn caster_login(addr: &SocketAddr, name: &str, password: &str) -> TcpStream {
+    let mut stream = make_caster(addr);
+    stream.write_fmt(format_args!("hello {} {}\n", name, password)).unwrap();
+    return stream;
 }
