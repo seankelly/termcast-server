@@ -38,10 +38,9 @@ fn bind_taken() {
 
 #[test]
 fn threaded_termcastd() {
-    let (thd, ev_channel, _caster_addr, _watcher_addr) = termcastd_thread();
+    let (_thd, ev_channel, _caster_addr, _watcher_addr) = termcastd_thread();
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
-    thd.join().unwrap();
 }
 
 
