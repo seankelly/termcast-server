@@ -44,6 +44,15 @@ fn threaded_termcastd() {
     ev_channel.send(TermcastdMessage::Quit).unwrap();
 }
 
+#[test]
+fn one_caster_log_in() {
+    let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
+
+    let mut _caster = caster_login(&caster_addr, "name", "pass");
+
+    ev_channel.send(TermcastdMessage::Quit).unwrap();
+}
+
 
 fn make_termcastd() -> TermcastServer {
     let config = TermcastConfig {
