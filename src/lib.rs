@@ -235,10 +235,10 @@ impl Caster {
             auth_buffer[idx] = byte;
         }
 
-        let offset = self.cast_buffer.len();
+        let cb_len = self.cast_buffer.len();
         for el in raw_input.iter().enumerate() {
             let (idx, byte) = el;
-            auth_buffer[idx+offset] = *byte;
+            auth_buffer[idx+cb_len] = *byte;
         }
 
         // Try to find a newline as that marks the end of the opening message.
