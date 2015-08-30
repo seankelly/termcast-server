@@ -256,8 +256,23 @@ impl Caster {
                 let name = parts[1];
                 // Allow the password field to be empty. Default to the empty string.
                 let password = if parts.len() >= 3 { parts[2] } else { "" };
+                // Would like to use this but can't get the types to quite work out.
+                //let password = parts.get(2).unwrap_or("");
                 if let Ok(login) = caster_auth.login(&name, &password) {
-                    return Ok((newline_idx, String::from(name)));
+                    // Determine if there are any remaining bytes in raw_input. Reset the
+                    // cast_buffer to contain those bytes.
+                    self.cast_buffer.clear();
+                    let cast_byte_idx = newline_idx + 1;
+                    let offset = if cast_byte_idx < auth_buffer.len() {
+                        self.cast_buffer.add(&auth_buffer[cast_byte_idx..]);
+                        // Extra bytes left in the buffer. Need to return the index into raw_input
+                        // so the calling function can relay those bytes.
+                        cast_byte_idx - cb_len
+                    }
+                    else {
+                        0
+                    };
+                    return Ok((offset, String::from(name)));
                 }
                 else {
                     return Err(AuthResults::InvalidLogin);
