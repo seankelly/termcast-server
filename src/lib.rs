@@ -216,7 +216,10 @@ impl Caster {
     fn relay_input(&mut self, input: &[u8]) {
         for w in self.watchers.iter() {
             let mut watcher = w.borrow_mut();
-            watcher.sock.write(&input);
+            let res = watcher.sock.write(&input);
+            // Need to notify the watcher has an error.
+            if res.is_err() {
+            }
         }
     }
 
