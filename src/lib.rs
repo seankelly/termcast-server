@@ -197,9 +197,13 @@ impl Caster {
                 self.relay_input(&bytes_received);
             }
             else {
-                if let Ok(auth) = self.handle_auth(&bytes_received, caster_auth) {
-                }
-                else {
+                let auth = self.handle_auth(&bytes_received, caster_auth);
+                match auth {
+                    Ok(offset) => {
+                    },
+                    // Not enough data sent so try again later.
+                    Err(AuthResults::TryAgain) => {},
+                    Err(e) => return Err(()),
                 }
             }
         }
