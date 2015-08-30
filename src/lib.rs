@@ -200,6 +200,7 @@ impl Caster {
                 let auth = self.handle_auth(&bytes_received, caster_auth);
                 match auth {
                     Ok((offset, name)) => {
+                        self.name = Some(name);
                     },
                     // Not enough data sent so try again later.
                     Err(AuthResults::TryAgain) => {},
