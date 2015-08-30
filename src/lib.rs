@@ -201,6 +201,7 @@ impl Caster {
                 match auth {
                     Ok((offset, name)) => {
                         self.name = Some(name);
+                        self.relay_input(&bytes_received[offset..]);
                     },
                     // Not enough data sent so try again later.
                     Err(AuthResults::TryAgain) => {},
