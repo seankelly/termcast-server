@@ -191,7 +191,7 @@ impl Watcher {
 impl Caster {
     fn input(&mut self, caster_auth: &mut CasterAuth) -> Result<(), ()> {
         let mut bytes_received = [0u8; 1024];
-        while let Ok(num_bytes) = self.sock.read(&mut bytes_received) {
+        while let Ok(_num_bytes) = self.sock.read(&mut bytes_received) {
             // If a name is set then all bytes go straight to the watchers.
             if self.name.is_some() {
                 self.relay_input(&bytes_received);
@@ -205,7 +205,7 @@ impl Caster {
                     },
                     // Not enough data sent so try again later.
                     Err(AuthResults::TryAgain) => {},
-                    Err(e) => return Err(()),
+                    Err(_) => return Err(()),
                 }
             }
         }
@@ -259,7 +259,7 @@ impl Caster {
                 let password = if parts.len() >= 3 { parts[2] } else { "" };
                 // Would like to use this but can't get the types to quite work out.
                 //let password = parts.get(2).unwrap_or("");
-                if let Ok(login) = caster_auth.login(&name, &password) {
+                if let Ok(_) = caster_auth.login(&name, &password) {
                     // Determine if there are any remaining bytes in raw_input. Reset the
                     // cast_buffer to contain those bytes.
                     self.cast_buffer.clear();
