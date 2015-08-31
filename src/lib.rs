@@ -388,12 +388,33 @@ impl Termcastd {
     }
 
     fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        if let Err(watchers) = self.caster_input(event_loop, token) {
+            for watcher in watchers.iter() {
+                self.reset_watcher(event_loop, *watcher);
+            }
+
+            self.casters.remove(&token);
+        }
+    }
+
+    fn caster_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<(), Vec<Token>> {
         if let Some(caster) = self.casters.get_mut(&token) {
-            caster.input(&mut self.caster_auth);
+            if let Err(_) = caster.input(&mut self.caster_auth) {
+                // Assemble all of the watchers, stuff them in a vector, and send it up to have
+                // those watchers reset to the main menu.
+                let watchers = caster.watchers.iter()
+                    .map(|w| w.borrow().token).collect();
+
+                event_loop.deregister(&caster.sock);
+
+                return Err(watchers);
+            }
         }
         else {
             // Got an event for a token with no matching socket.
+            return Err(Vec::new());
         }
+        Ok(())
     }
 
     // Section for Watcher functions.
@@ -430,6 +451,14 @@ impl Termcastd {
         if let Some(w) = self.watchers.get_mut(&token) {
             let mut watcher = w.borrow_mut();
             watcher.parse_input(&mut self.casters, num_watching);
+        }
+        else {
+            // Got an event for a token with no matching socket.
+        }
+    }
+
+    fn reset_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+        if let Some(w) = self.watchers.get_mut(&token) {
         }
         else {
             // Got an event for a token with no matching socket.
