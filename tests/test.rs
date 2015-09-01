@@ -2,7 +2,7 @@ extern crate mio;
 extern crate termcastd;
 
 use std::thread;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::net::SocketAddr;
 use std::sync::mpsc::channel;
 
@@ -49,6 +49,20 @@ fn one_caster_log_in() {
     let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
 
     let mut _caster = caster_login(&caster_addr, "name", "pass");
+
+    ev_channel.send(TermcastdMessage::Quit).unwrap();
+}
+
+#[test]
+fn caster_log_in_fail() {
+    let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
+
+    let mut caster = make_caster(&caster_addr);
+    caster.write("hello\n".as_bytes()).unwrap();
+
+    let mut buf = [0; 128];
+    let res = caster.read(&mut buf);
+    assert!(res.is_err());
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
 }
