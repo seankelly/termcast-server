@@ -393,7 +393,7 @@ impl Termcastd {
                 self.reset_watcher(event_loop, *watcher);
             }
 
-            self.casters.remove(&token);
+            let _ = self.casters.remove(&token);
         }
     }
 
