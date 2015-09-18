@@ -62,11 +62,44 @@ fn one_caster_log_in() {
 fn caster_log_in_fail() {
     let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
 
-    let mut caster = make_caster(&caster_addr);
+    let mut caster = make_caster_timeout(&caster_addr);
     caster.write("hello\n".as_bytes()).unwrap();
 
     let mut buf = [0; 128];
-    caster.set_read_timeout(Some(Duration::new(1, 0)));
+    let res = caster.read(&mut buf);
+    assert!(res.is_ok());
+    assert_eq!(res.unwrap(), 0);
+
+    ev_channel.send(TermcastdMessage::Quit).unwrap();
+}
+
+/*
+#[test]
+fn caster_log_in_fail_no_name() {
+    let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
+
+    let mut caster = make_caster_timeout(&caster_addr);
+    caster.write("hello  \n".as_bytes()).unwrap();
+
+    let mut buf = [0; 128];
+    let res = caster.read(&mut buf);
+    println!("res: {:?}", res);
+    assert!(res.is_ok());
+    assert_eq!(res.unwrap(), 0);
+
+    ev_channel.send(TermcastdMessage::Quit).unwrap();
+}
+*/
+
+#[test]
+fn caster_log_in_fail_no_newline() {
+    let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
+
+    let mut caster = make_caster_timeout(&caster_addr);
+    let input = [32; 1025];
+    caster.write(&input).unwrap();
+
+    let mut buf = [0; 128];
     let res = caster.read(&mut buf);
     assert!(res.is_ok());
     assert_eq!(res.unwrap(), 0);
