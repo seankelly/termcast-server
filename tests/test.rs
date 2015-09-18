@@ -103,6 +103,12 @@ fn make_caster(addr: &SocketAddr) -> TcpStream {
     TcpStream::connect(addr).unwrap()
 }
 
+fn make_caster_timeout(addr: &SocketAddr) -> TcpStream {
+    let caster = TcpStream::connect(addr).unwrap();
+    caster.set_read_timeout(Some(Duration::new(1, 0))).unwrap();
+    return caster;
+}
+
 fn caster_login(addr: &SocketAddr, name: &str, password: &str) -> TcpStream {
     let mut stream = make_caster(addr);
     stream.write_fmt(format_args!("hello {} {}\n", name, password)).unwrap();
