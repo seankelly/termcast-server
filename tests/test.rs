@@ -3,15 +3,16 @@ extern crate termcastd;
 
 use std::thread;
 use std::io::{Read, Write};
-use std::net::SocketAddr;
+use std::net::{SocketAddr, TcpStream};
 use std::sync::mpsc::channel;
+use std::time::Duration;
 
 use termcastd::config::TermcastConfig;
 use termcastd::TermcastServer;
 use termcastd::TermcastdMessage;
 
 use mio::Sender;
-use mio::tcp::{TcpListener, TcpStream};
+use mio::tcp::TcpListener;
 
 #[test]
 fn listen() {
@@ -61,8 +62,10 @@ fn caster_log_in_fail() {
     caster.write("hello\n".as_bytes()).unwrap();
 
     let mut buf = [0; 128];
+    caster.set_read_timeout(Some(Duration::new(1, 0)));
     let res = caster.read(&mut buf);
-    assert!(res.is_err());
+    assert!(res.is_ok());
+    assert_eq!(res.unwrap(), 0);
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
 }
