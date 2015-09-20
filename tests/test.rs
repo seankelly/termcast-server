@@ -66,21 +66,21 @@ fn caster_log_in_fail() {
     let mut buf = [0; 128];
 
     // Need more than just "hello\n".
-    let mut caster = make_caster_timeout(&caster_addr);
+    let mut caster = connect_timeout(&caster_addr);
     caster.write("hello\n".as_bytes()).unwrap();
     let res = caster.read(&mut buf);
     assert!(res.is_ok(), "Missing name fails.");
     assert_eq!(res.unwrap(), 0);
 
     // Write 1025 bytes without a newline, more than the 1024 byte limit.
-    let mut caster = make_caster_timeout(&caster_addr);
+    let mut caster = connect_timeout(&caster_addr);
     let input = [32; 1025];
     caster.write(&input).unwrap();
     let res = caster.read(&mut buf);
     assert!(res.is_ok(), "No newline fails.");
     assert_eq!(res.unwrap(), 0);
 
-    let mut caster = make_caster_timeout(&caster_addr);
+    let mut caster = connect_timeout(&caster_addr);
     caster.write("hello  \n".as_bytes()).unwrap();
     let res = caster.read(&mut buf);
     assert!(res.is_ok(), "Zero-length name fails.");
@@ -114,18 +114,18 @@ fn termcastd_thread() -> (thread::JoinHandle<()>, Sender<TermcastdMessage>, Sock
     return (thd, ev_channel, caster_addr, watcher_addr);
 }
 
-fn make_caster(addr: &SocketAddr) -> TcpStream {
+fn connect(addr: &SocketAddr) -> TcpStream {
     TcpStream::connect(addr).unwrap()
 }
 
-fn make_caster_timeout(addr: &SocketAddr) -> TcpStream {
-    let caster = make_caster(addr);
+fn connect_timeout(addr: &SocketAddr) -> TcpStream {
+    let caster = connect(addr);
     caster.set_read_timeout(Some(Duration::new(1, 0))).unwrap();
     return caster;
 }
 
 fn caster_login(addr: &SocketAddr, name: &str, password: &str) -> TcpStream {
-    let mut stream = make_caster(addr);
+    let mut stream = connect(addr);
     stream.write_fmt(format_args!("hello {} {}\n", name, password)).unwrap();
     return stream;
 }
