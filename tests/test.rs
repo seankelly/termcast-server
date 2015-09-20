@@ -53,7 +53,8 @@ fn one_caster_log_in() {
     caster.set_read_timeout(Some(Duration::new(1, 0))).unwrap();
     let mut buf = [0; 128];
     let res = caster.read(&mut buf);
-    assert!(res.is_err());
+    // This will be an error because the read will timeout because there is nothing to read.
+    assert!(res.is_err(), "Logged in successfully.");
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
 }
