@@ -68,7 +68,7 @@ fn caster_log_in_fail() {
     let mut caster = make_caster_timeout(&caster_addr);
     caster.write("hello\n".as_bytes()).unwrap();
     let res = caster.read(&mut buf);
-    assert!(res.is_ok());
+    assert!(res.is_ok(), "Missing name fails.");
     assert_eq!(res.unwrap(), 0);
 
     // Write 1025 bytes without a newline, more than the 1024 byte limit.
@@ -76,7 +76,7 @@ fn caster_log_in_fail() {
     let input = [32; 1025];
     caster.write(&input).unwrap();
     let res = caster.read(&mut buf);
-    assert!(res.is_ok());
+    assert!(res.is_ok(), "No newline fails.");
     assert_eq!(res.unwrap(), 0);
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
