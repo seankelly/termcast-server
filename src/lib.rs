@@ -258,6 +258,9 @@ impl Caster {
                 }
 
                 let name = parts[1];
+                if name.len() == 0 {
+                    return Err(AuthResults::InvalidLogin);
+                }
                 // Allow the password field to be empty. Default to the empty string.
                 let password = if parts.len() >= 3 { parts[2] } else { "" };
                 // Would like to use this but can't get the types to quite work out.
