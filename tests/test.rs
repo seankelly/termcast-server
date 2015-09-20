@@ -111,6 +111,15 @@ fn termcastd_thread() -> (thread::JoinHandle<()>, Sender<TermcastdMessage>, Sock
 
     let (ev_channel, caster_addr, watcher_addr) = rx.recv().unwrap();
 
+    // Connect to the watcher address. Once something is received, termcastd can be considered
+    // running. Then return connection details for the tests.
+    {
+        let mut watcher = connect(&watcher_addr);
+        // An 80x24 terminal is 1920 bytes. Round up to fit everything.
+        let mut buf = [0; 2048];
+        watcher.read(&mut buf).unwrap();
+    }
+
     return (thd, ev_channel, caster_addr, watcher_addr);
 }
 
