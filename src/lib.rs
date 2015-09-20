@@ -76,6 +76,7 @@ pub enum TermcastdMessage {
 
 enum AuthResults {
     InvalidLogin,
+    InvalidName,
     MissingHello,
     NotEnoughParts,
     TooLong,
@@ -262,10 +263,10 @@ impl Caster {
                 // The splitn above prevents spaces and this check verifies no control codes are in
                 // the name.
                 if name.len() == 0 {
-                    return Err(AuthResults::InvalidLogin);
+                    return Err(AuthResults::InvalidName);
                 }
                 else if name.as_bytes().iter().any(|b| *b < 32) {
-                    return Err(AuthResults::InvalidLogin);
+                    return Err(AuthResults::InvalidName);
                 }
                 // Allow the password field to be empty. Default to the empty string.
                 let password = if parts.len() >= 3 { parts[2] } else { "" };
