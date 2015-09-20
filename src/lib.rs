@@ -258,6 +258,9 @@ impl Caster {
                 }
 
                 let name = parts[1];
+                // Valid names must have a length and consist of characters/bytes greater than 32.
+                // The splitn above prevents spaces and this check verifies no control codes are in
+                // the name.
                 if name.len() == 0 {
                     return Err(AuthResults::InvalidLogin);
                 }
