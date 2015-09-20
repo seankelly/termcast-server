@@ -79,26 +79,14 @@ fn caster_log_in_fail() {
     assert!(res.is_ok(), "No newline fails.");
     assert_eq!(res.unwrap(), 0);
 
-    ev_channel.send(TermcastdMessage::Quit).unwrap();
-}
-
-/*
-#[test]
-fn caster_log_in_fail_no_name() {
-    let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
-
     let mut caster = make_caster_timeout(&caster_addr);
     caster.write("hello  \n".as_bytes()).unwrap();
-
-    let mut buf = [0; 128];
     let res = caster.read(&mut buf);
-    println!("res: {:?}", res);
-    assert!(res.is_ok());
+    assert!(res.is_ok(), "Zero-length name fails.");
     assert_eq!(res.unwrap(), 0);
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
 }
-*/
 
 
 fn make_termcastd() -> TermcastServer {
