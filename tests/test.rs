@@ -80,10 +80,18 @@ fn caster_log_in_fail() {
     assert!(res.is_ok(), "No newline fails.");
     assert_eq!(res.unwrap(), 0);
 
+    // Try a zero-length name.
     let mut caster = connect_timeout(&caster_addr);
     caster.write("hello  \n".as_bytes()).unwrap();
     let res = caster.read(&mut buf);
     assert!(res.is_ok(), "Zero-length name fails.");
+    assert_eq!(res.unwrap(), 0);
+
+    // Try a name with a control character in it.
+    let mut caster = connect_timeout(&caster_addr);
+    caster.write("hello \u{19} \n".as_bytes()).unwrap();
+    let res = caster.read(&mut buf);
+    assert!(res.is_ok(), "Control character in name fails.");
     assert_eq!(res.unwrap(), 0);
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
