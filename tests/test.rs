@@ -119,7 +119,7 @@ fn make_caster(addr: &SocketAddr) -> TcpStream {
 }
 
 fn make_caster_timeout(addr: &SocketAddr) -> TcpStream {
-    let caster = TcpStream::connect(addr).unwrap();
+    let caster = make_caster(addr);
     caster.set_read_timeout(Some(Duration::new(1, 0))).unwrap();
     return caster;
 }
