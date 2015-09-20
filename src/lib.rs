@@ -261,6 +261,9 @@ impl Caster {
                 if name.len() == 0 {
                     return Err(AuthResults::InvalidLogin);
                 }
+                else if name.as_bytes().iter().any(|b| *b < 32) {
+                    return Err(AuthResults::InvalidLogin);
+                }
                 // Allow the password field to be empty. Default to the empty string.
                 let password = if parts.len() >= 3 { parts[2] } else { "" };
                 // Would like to use this but can't get the types to quite work out.
