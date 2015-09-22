@@ -49,12 +49,21 @@ fn threaded_termcastd() {
 fn one_caster_log_in() {
     let (_thd, ev_channel, caster_addr, _watcher_addr) = termcastd_thread();
 
+    let mut buf = [0; 128];
+
     let mut caster = caster_login(&caster_addr, "name", "pass");
     caster.set_read_timeout(Some(Duration::new(1, 0))).unwrap();
-    let mut buf = [0; 128];
     let res = caster.read(&mut buf);
     // This will be an error because the read will timeout because there is nothing to read.
     assert!(res.is_err(), "Logged in successfully.");
+
+    // Test sending the login in three parts.
+    let mut caster = connect_timeout(&caster_addr);
+    caster.write("hello ".as_bytes()).unwrap();
+    caster.write("name ".as_bytes()).unwrap();
+    caster.write("pass\n".as_bytes()).unwrap();
+    let res = caster.read(&mut buf);
+    assert!(res.is_err(), "Three-part log in successful.");
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
 }
