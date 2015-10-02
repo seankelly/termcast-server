@@ -6,6 +6,7 @@ use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::sync::mpsc::channel;
 use std::time::Duration;
+use std::str;
 
 use termcastd::config::TermcastConfig;
 use termcastd::TermcastServer;
@@ -104,6 +105,19 @@ fn caster_log_in_fail() {
     assert_eq!(res.unwrap(), 0);
 
     ev_channel.send(TermcastdMessage::Quit).unwrap();
+}
+
+#[test]
+fn can_cast() {
+    let (_thd, _ev_channel, caster_addr, watcher_addr) = termcastd_thread();
+
+    let mut caster = caster_login(&caster_addr, "caster1", "secret");
+
+    let mut watcher = connect(&watcher_addr);
+    let mut buf = [0; 2048];
+    watcher.read(&mut buf).unwrap();
+    let utf8_buf = str::from_utf8(&buf).unwrap();
+    assert!(utf8_buf.find("caster1").is_some(), "Caster available to watch");
 }
 
 
