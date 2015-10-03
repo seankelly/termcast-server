@@ -326,6 +326,47 @@ impl Termcastd {
         return token;
     }
 
+    fn watcher_menu(&mut self, offset: usize) -> Vec<u8> {
+        fn caster_menu_entry(choice: &'static str, caster: &Caster) -> String {
+            let _caster = caster;
+            format!(" {}) {}", choice, "caster")
+        }
+
+        let mut offset = offset;
+        // If the offset is too high, reset it to the last page.
+        if offset > self.casters.len() {
+            let num_casters = self.casters.len();
+            let page_length = MENU_CHOICES.len();
+            let pages = num_casters / page_length;
+            let new_offset = pages * page_length;
+            offset = if num_casters % num_casters != 0 { new_offset }
+                     else { new_offset - 1 };
+        }
+
+        let menu_header = format!(
+            concat!(
+                "{}{}",
+                "\n",
+                " ## Termcast\n",
+                " ## {} sessions available. {} watchers connected.\n\n",
+            ),
+            term::clear_screen(), term::reset_cursor(),
+            self.casters.len(), self.watchers.len());
+
+        let mut menu: Vec<u8> = Vec::with_capacity(80*24);
+        menu.extend(menu_header.as_bytes());
+
+        let caster_choices = self.casters.values()
+                    .skip(offset)
+                    .take(CASTERS_PER_SCREEN);
+        for c in caster_choices.zip(MENU_CHOICES.iter()) {
+            let (caster, choice) = c;
+            menu.extend(caster_menu_entry(choice, caster).as_bytes());
+        }
+
+        return menu;
+    }
+
     // Section for Caster and Watcher functions.
     ////////////////////////////////////
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
