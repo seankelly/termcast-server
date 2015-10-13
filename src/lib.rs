@@ -149,8 +149,7 @@ impl Watcher {
         let res = self.sock.write(&menu_bytes);
     }
 
-    fn parse_input(&mut self,
-                   casters: &mut HashMap<Token, Caster>) -> WatcherAction {
+    fn parse_input(&mut self) -> WatcherAction {
         while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
             let each_byte = 0..num_bytes;
             //let channel = event_loop.channel();
@@ -519,7 +518,7 @@ impl Termcastd {
     fn watcher_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<(), ()> {
         if let Some(w) = self.watchers.get_mut(&token) {
             let mut watcher = w.borrow_mut();
-            match watcher.parse_input(&mut self.casters) {
+            match watcher.parse_input() {
                 // The watcher returns the overall offset. Check that offset points to a valid
                 // caster. If it does, move the watcher to watch that caster. If it does not,
                 // refresh the menu for that watcher.
