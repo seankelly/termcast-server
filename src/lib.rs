@@ -441,6 +441,9 @@ impl Termcastd {
         }
     }
 
+    /// Wrapper function for handling caster input. The caster will be removed if an error is
+    /// returned from the wrapped function. Any watchers of that caster will be reset back to the
+    /// main menu.
     fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Err(watchers) = self.caster_input(event_loop, token) {
             for watcher in watchers.iter() {
@@ -451,6 +454,9 @@ impl Termcastd {
         }
     }
 
+    /// Actual method to interface between the Caster method to parse the input and Termcastd. If
+    /// there is an error, then the watchers for that caster will be grouped together and sent up
+    /// the call chain to have them reset.
     fn caster_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<(), Vec<Token>> {
         if let Some(caster) = self.casters.get_mut(&token) {
             if let Err(_) = caster.input(&mut self.caster_auth) {
@@ -503,6 +509,7 @@ impl Termcastd {
         }
     }
 
+    /// Wrapper function for when the casters structure needs to be modified.
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         let num_watching = self.watchers.len();
         if let Some(w) = self.watchers.get_mut(&token) {
