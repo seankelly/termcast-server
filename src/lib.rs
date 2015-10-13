@@ -456,10 +456,16 @@ impl Termcastd {
                 if res.is_ok() {
                     self.number_watching += 1;
                     let menu = self.watcher_menu(watcher.offset);
-                    watcher.sock.write(&menu);
-                    let client = Client::Watcher;
-                    self.clients.insert(token, client);
-                    self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
+                    if watcher.sock.write(&menu).is_ok() {
+                        let client = Client::Watcher;
+                        self.clients.insert(token, client);
+                        self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
+                    }
+                    else {
+                        if let Err(e) = event_loop.deregister(&watcher.sock) {
+                            // TODO: Fill in something here?
+                        }
+                    }
                 }
             }
         }
