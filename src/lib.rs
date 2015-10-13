@@ -300,7 +300,10 @@ impl Caster {
         else {
             // No new line found so add all of the data to the ring buffer. Return an "error"
             // indicating not authenticated yet.
-            self.cast_buffer.add_no_wraparound(&raw_input);
+            let res = self.cast_buffer.add_no_wraparound(&raw_input);
+            if res.is_err() {
+                return Err(AuthResults::TooLong);
+            }
             return Err(AuthResults::TryAgain);
         }
     }
