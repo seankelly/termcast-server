@@ -71,7 +71,6 @@ pub struct TermcastServer {
 pub enum TermcastdMessage {
     CasterDisconnected(Token),
     WatcherDisconnected(Token),
-    AddWatcher(Token, usize),
     Quit,
 }
 
@@ -106,49 +105,6 @@ enum WatcherAction {
 
 
 impl Watcher {
-    fn show_menu(&mut self,
-                casters: &HashMap<Token, Caster>,
-                number_casting: usize,
-                number_watching: usize) {
-        fn caster_menu_entry(choice: &'static str, caster: &Caster) -> String {
-            let _caster = caster;
-            format!(" {}) {}", choice, "caster")
-        }
-
-        self.state = WatcherState::MainMenu;
-
-        let menu_header = format!(
-            "{}{}\n ## Termcast\n ## {} sessions available. {} watchers connected.\n\n",
-            term::clear_screen(), term::reset_cursor(),
-            number_casting, number_watching);
-
-        // If the offset is too high, reset it to the last page.
-        if self.offset > casters.len() {
-            let num_casters = casters.len();
-            let page_length = MENU_CHOICES.len();
-            let pages = num_casters / page_length;
-            let new_offset = pages * page_length;
-            self.offset = if num_casters % num_casters != 0 { new_offset }
-                          else { new_offset - 1 };
-        }
-
-        let menu_choices: Vec<String> = casters.values()
-                    .skip(self.offset)
-                    .take(CASTERS_PER_SCREEN)
-                    .zip(MENU_CHOICES.iter())
-                    .map(|c| {
-                        let (caster, choice) = c;
-                        caster_menu_entry(choice, caster)
-                    })
-                    .collect();
-        let menu_header_bytes = menu_header.as_bytes();
-        let mut menu = menu_choices.connect("\n");
-        menu.push_str("\n");
-        let menu_bytes = menu.as_bytes();
-        let res = self.sock.write(&menu_header_bytes);
-        let res = self.sock.write(&menu_bytes);
-    }
-
     fn parse_input(&mut self) -> WatcherAction {
         while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
             let each_byte = 0..num_bytes;
@@ -501,7 +457,6 @@ impl Termcastd {
                     self.number_watching += 1;
                     let menu = self.watcher_menu(watcher.offset);
                     watcher.sock.write(&menu);
-                    watcher.show_menu(&self.casters, self.casters.len(), self.watchers.len());
                     let client = Client::Watcher;
                     self.clients.insert(token, client);
                     self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
@@ -585,17 +540,6 @@ impl Handler for Termcastd {
             },
             TermcastdMessage::WatcherDisconnected(token) => {
                 self.handle_disconnect(event_loop, token);
-            },
-            TermcastdMessage::AddWatcher(token, caster_offset) => {
-                if caster_offset < self.casters.len() {
-                }
-                else {
-                    let num_watching = self.watchers.len();
-                    if let Some(w) = self.watchers.get_mut(&token) {
-                        let mut watcher = w.borrow_mut();
-                        watcher.show_menu(&self.casters, self.casters.len(), num_watching);
-                    }
-                }
             },
             TermcastdMessage::Quit => {
                 event_loop.shutdown();
