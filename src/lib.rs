@@ -150,8 +150,7 @@ impl Watcher {
     }
 
     fn parse_input(&mut self,
-                   casters: &mut HashMap<Token, Caster>,
-                   number_watching: usize) -> WatcherAction {
+                   casters: &mut HashMap<Token, Caster>) -> WatcherAction {
         while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
             let each_byte = 0..num_bytes;
             //let channel = event_loop.channel();
@@ -511,10 +510,9 @@ impl Termcastd {
 
     /// Wrapper function for when the casters structure needs to be modified.
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
-        let num_watching = self.watchers.len();
         if let Some(w) = self.watchers.get_mut(&token) {
             let mut watcher = w.borrow_mut();
-            watcher.parse_input(&mut self.casters, num_watching);
+            watcher.parse_input(&mut self.casters);
         }
         else {
             // Got an event for a token with no matching socket.
