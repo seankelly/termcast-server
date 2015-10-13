@@ -98,6 +98,12 @@ enum WatcherState {
     Watching,
 }
 
+enum WatcherAction {
+    Nothing,
+    ShowMenu,
+    Watch(usize),
+}
+
 
 impl Watcher {
     fn show_menu(&mut self,
@@ -145,7 +151,7 @@ impl Watcher {
 
     fn parse_input(&mut self,
                    casters: &mut HashMap<Token, Caster>,
-                   number_watching: usize) {
+                   number_watching: usize) -> WatcherAction {
         while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
             let each_byte = 0..num_bytes;
             //let channel = event_loop.channel();
@@ -155,7 +161,8 @@ impl Watcher {
                         // Pressing 'q' while watching returns the watcher to the main menu.
                         if *byte == 113 {
                             // This will reset the state back to the main menu.
-                            self.show_menu(&casters, casters.len(), number_watching);
+                            self.state = WatcherState::MainMenu;
+                            return WatcherAction::ShowMenu;
                         }
                     },
                     WatcherState::MainMenu => {
@@ -165,27 +172,23 @@ impl Watcher {
                                 let page_offset = *byte as usize - 97;
                                 // Check if the entry picked is still valid.
                                 let caster_offset = self.offset + page_offset;
-                                if caster_offset <= casters.len() {
-                                    self.state = WatcherState::Watching;
-                                    //channel.send(TermcastdMessage::AddWatcher(token, caster_offset));
-                                }
-                                else {
-                                    self.show_menu(&casters, casters.len(), number_watching);
-                                }
+                                return WatcherAction::Watch(caster_offset);
                             }
                             113 => { // q
                                 self.state = WatcherState::Disconnecting;
                                 //channel.send(TermcastdMessage::WatcherDisconnected(token));
-                                return;
+                                return WatcherAction::Nothing;
                             },
                             _ => {},
                         }
                     },
                     WatcherState::Connecting => {},
-                    WatcherState::Disconnecting => { return },
+                    WatcherState::Disconnecting => { return WatcherAction::Nothing },
                 }
             }
         }
+
+        return WatcherAction::Nothing;
     }
 }
 
@@ -489,6 +492,8 @@ impl Termcastd {
                 );
                 if res.is_ok() {
                     self.number_watching += 1;
+                    let menu = self.watcher_menu(watcher.offset);
+                    watcher.sock.write(&menu);
                     watcher.show_menu(&self.casters, self.casters.len(), self.watchers.len());
                     let client = Client::Watcher;
                     self.clients.insert(token, client);
