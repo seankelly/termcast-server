@@ -44,6 +44,7 @@ struct Caster {
 struct Watcher {
     offset: usize,
     sock: TcpStream,
+    input_buffer: [u8; 128],
     token: Token,
     state: WatcherState,
 }
@@ -145,11 +146,10 @@ impl Watcher {
     fn parse_input(&mut self,
                    casters: &mut HashMap<Token, Caster>,
                    number_watching: usize) {
-        let mut bytes_received = [0u8; 128];
-        while let Ok(num_bytes) = self.sock.read(&mut bytes_received) {
+        while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
             let each_byte = 0..num_bytes;
             //let channel = event_loop.channel();
-            for (_offset, byte) in each_byte.zip(bytes_received.iter()) {
+            for (_offset, byte) in each_byte.zip(self.input_buffer.iter()) {
                 match self.state {
                     WatcherState::Watching => {
                         // Pressing 'q' while watching returns the watcher to the main menu.
@@ -477,6 +477,7 @@ impl Termcastd {
                 let mut watcher = Watcher {
                     offset: 0,
                     sock: sock,
+                    input_buffer: [0; 128],
                     token: token,
                     state: WatcherState::Connecting,
                 };
