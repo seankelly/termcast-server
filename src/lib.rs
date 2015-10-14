@@ -480,7 +480,7 @@ impl Termcastd {
     /// Handle actions affecting the watcher in this method. Actions that affect casters will be
     /// sent up the call chain.
     fn watcher_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<(), ()> {
-        if let Some(w) = self.watchers.get_mut(&token) {
+        if let Some(w) = self.watchers.get(&token) {
             let mut watcher = w.borrow_mut();
             loop {
                 match watcher.parse_input() {
