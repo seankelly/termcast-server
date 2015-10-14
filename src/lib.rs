@@ -487,8 +487,10 @@ impl Termcastd {
                     // The watcher returns the overall offset. Check that offset points to a valid
                     // caster. If it does, move the watcher to watch that caster. If it does not,
                     // refresh the menu for that watcher.
-                    WatcherAction::Watch(usize) => {},
-                    WatcherAction::ShowMenu => {},
+                    WatcherAction::Watch(offset) => {},
+                    WatcherAction::ShowMenu => {
+                        let menu = self.watcher_menu(watcher.offset);
+                    },
                     WatcherAction::Nothing => { break },
                 }
             }
