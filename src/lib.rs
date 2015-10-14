@@ -286,7 +286,7 @@ impl Termcastd {
         return token;
     }
 
-    fn watcher_menu(&mut self, offset: usize) -> Vec<u8> {
+    fn watcher_menu(&self, offset: usize) -> Vec<u8> {
         fn caster_menu_entry(choice: &'static str, caster: &Caster) -> String {
             let _caster = caster;
             format!(" {}) {}", choice, "caster")
