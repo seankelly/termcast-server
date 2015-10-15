@@ -462,13 +462,13 @@ impl Termcastd {
                         return;
                     }
 
+                    let client = Client::Watcher;
+                    self.clients.insert(token, client);
+                    self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
+
+                    let mut watcher = self.watchers.get(&token).unwrap().borrow_mut();
                     let menu = self.watcher_menu(watcher.offset);
-                    if watcher.sock.write(&menu).is_ok() {
-                        let client = Client::Watcher;
-                        self.clients.insert(token, client);
-                        self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
-                    }
-                    else {
+                    if watcher.sock.write(&menu).is_err() {
                         if let Err(e) = event_loop.deregister(&watcher.sock) {
                             // TODO: Fill in something here?
                         }
