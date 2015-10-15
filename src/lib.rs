@@ -457,6 +457,11 @@ impl Termcastd {
                 );
                 if res.is_ok() {
                     self.number_watching += 1;
+                    if watcher.sock.write(&term::disable_local_echo()).is_err() {
+                        event_loop.deregister(&watcher.sock).unwrap();
+                        return;
+                    }
+
                     let menu = self.watcher_menu(watcher.offset);
                     if watcher.sock.write(&menu).is_ok() {
                         let client = Client::Watcher;
