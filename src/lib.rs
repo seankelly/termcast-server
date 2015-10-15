@@ -475,13 +475,16 @@ impl Termcastd {
 
     /// Wrapper function for when the casters structure needs to be modified.
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
-        if let Err(caster) = self.watcher_input(event_loop, token) {
+        match self.watcher_input(event_loop, token) {
+            Ok(state) => {
+            },
+            Err(_) => {}
         }
     }
 
     /// Handle actions affecting the watcher in this method. Actions that affect casters will be
     /// sent up the call chain.
-    fn watcher_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<(), ()> {
+    fn watcher_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<WatcherAction, ()> {
         if let Some(w) = self.watchers.get(&token) {
             let mut watcher = w.borrow_mut();
             loop {
@@ -507,7 +510,7 @@ impl Termcastd {
             // Got an event for a token with no matching socket.
         }
 
-        Ok(())
+        Ok(WatcherAction::Nothing)
     }
 
     fn reset_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
