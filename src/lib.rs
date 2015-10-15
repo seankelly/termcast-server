@@ -490,6 +490,10 @@ impl Termcastd {
                     WatcherAction::Watch(offset) => {},
                     WatcherAction::ShowMenu => {
                         let menu = self.watcher_menu(watcher.offset);
+                        let res = watcher.sock.write(&menu);
+                        if res.is_err() {
+                            return Err(());
+                        }
                     },
                     WatcherAction::Nothing => { break },
                 }
