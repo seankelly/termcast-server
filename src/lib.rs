@@ -98,8 +98,10 @@ enum WatcherState {
 }
 
 enum WatcherAction {
+    Exit,
     Nothing,
     ShowMenu,
+    StopWatching,
     Watch(usize),
 }
 
@@ -488,6 +490,7 @@ impl Termcastd {
                     // caster. If it does, move the watcher to watch that caster. If it does not,
                     // refresh the menu for that watcher.
                     WatcherAction::Watch(offset) => {},
+                    WatcherAction::StopWatching => { },
                     WatcherAction::ShowMenu => {
                         let menu = self.watcher_menu(watcher.offset);
                         let res = watcher.sock.write(&menu);
@@ -495,6 +498,7 @@ impl Termcastd {
                             return Err(());
                         }
                     },
+                    WatcherAction::Exit => { break },
                     WatcherAction::Nothing => { break },
                 }
             }
