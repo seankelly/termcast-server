@@ -308,9 +308,9 @@ impl Termcastd {
         let menu_header = format!(
             concat!(
                 "{}{}",
-                "\n",
-                " ## Termcast\n",
-                " ## {} sessions available. {} watchers connected.\n\n",
+                "\r\n",
+                " ## Termcast\r\n",
+                " ## {} sessions available. {} watchers connected.\r\n\r\n",
             ),
             term::clear_screen(), term::reset_cursor(),
             self.casters.len(), self.watchers.len());
