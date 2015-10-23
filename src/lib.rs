@@ -135,7 +135,10 @@ impl Watcher {
                                 //channel.send(TermcastdMessage::WatcherDisconnected(token));
                                 return WatcherAction::Exit;
                             },
-                            _ => {},
+                            // Any other character, refresh the menu.
+                            _ => {
+                                return WatcherAction::ShowMenu;
+                            },
                         }
                     },
                     WatcherState::Connecting => {},
