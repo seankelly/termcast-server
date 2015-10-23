@@ -160,6 +160,8 @@ fn termcastd_thread() -> (thread::JoinHandle<()>, Sender<TermcastdMessage>, Sock
         // An 80x24 terminal is 1920 bytes. Round up to fit everything.
         let mut buf = [0; 2048];
         watcher.read(&mut buf).unwrap();
+        let quit = ['q' as u8];
+        watcher.write(&quit).unwrap();
     }
 
     return (thd, ev_channel, caster_addr, watcher_addr);
