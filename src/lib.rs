@@ -475,6 +475,10 @@ impl Termcastd {
                     let menu = self.watcher_menu(watcher.offset);
                     watcher.state = WatcherState::MainMenu;
                     if watcher.sock.write(&menu).is_err() {
+                        /*
+                        self.clients.remove(&token);
+                        self.watchers.remove(&token);
+                        */
                         if let Err(e) = event_loop.deregister(&watcher.sock) {
                             // TODO: Fill in something here?
                         }
