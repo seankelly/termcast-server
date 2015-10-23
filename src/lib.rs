@@ -473,6 +473,7 @@ impl Termcastd {
 
                     let mut watcher = self.watchers.get(&token).unwrap().borrow_mut();
                     let menu = self.watcher_menu(watcher.offset);
+                    watcher.state = WatcherState::MainMenu;
                     if watcher.sock.write(&menu).is_err() {
                         if let Err(e) = event_loop.deregister(&watcher.sock) {
                             // TODO: Fill in something here?
