@@ -487,7 +487,9 @@ impl Termcastd {
     /// Wrapper function for when the casters structure needs to be modified.
     fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         match self.watcher_input(event_loop, token) {
-            Ok(WatcherAction::Exit) => {},
+            Ok(WatcherAction::Exit) => {
+                let _ = self.watchers.remove(&token);
+            },
             Ok(_) => {},
             Err(_) => {}
         }
