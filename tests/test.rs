@@ -111,7 +111,7 @@ fn caster_log_in_fail() {
 fn can_cast() {
     let (_thd, _ev_channel, caster_addr, watcher_addr) = termcastd_thread();
 
-    let mut caster = caster_login(&caster_addr, "caster1", "secret");
+    let _caster = caster_login(&caster_addr, "caster1", "secret");
 
     let mut watcher = connect(&watcher_addr);
     let mut buf = [0; 2048];
