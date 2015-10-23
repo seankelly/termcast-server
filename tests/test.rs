@@ -115,10 +115,18 @@ fn can_cast() {
 
     let mut watcher = connect(&watcher_addr);
     let mut buf = [0; 2048];
-    watcher.read(&mut buf).unwrap();
-    // Chop off any invalid utf8 bytes at the beginning of the stream by scanning until a '#' is
-    // found. That indicates the banner has started.
-    let offset = buf.iter().take_while(|b| **b != 0x23).count();
+    watcher.set_read_timeout(Some(Duration::new(0, 100))).unwrap();
+    let offset;
+    loop {
+        watcher.read(&mut buf).unwrap();
+        // Scan for the position of the first '#' in the stream, this indicates the banner. Keep
+        // reading from the socket until it's found.
+        if let Some(i) = buf.iter().position(|b| *b == 0x23) {
+            offset = i;
+            break;
+        }
+    }
+
     let utf8_buf = str::from_utf8(&buf[offset..]).unwrap();
     assert!(utf8_buf.find("caster1").is_some(), "Caster available to watch");
 }
