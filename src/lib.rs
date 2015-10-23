@@ -512,7 +512,9 @@ impl Termcastd {
                             return Err(());
                         }
                     },
-                    WatcherAction::Exit => { break },
+                    WatcherAction::Exit => {
+                        return Ok(WatcherAction::Exit);
+                    },
                     WatcherAction::Nothing => { break },
                 }
             }
