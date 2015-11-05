@@ -111,24 +111,41 @@ fn caster_log_in_fail() {
 fn can_cast() {
     let (_thd, _ev_channel, caster_addr, watcher_addr) = termcastd_thread();
 
-    let _caster = caster_login(&caster_addr, "caster1", "secret");
+    let mut caster = caster_login(&caster_addr, "caster1", "secret");
+    // Write something to keep the value from being optimized away.
+    caster.write(&[32]).unwrap();
 
     let mut watcher = connect(&watcher_addr);
     let mut buf = [0; 2048];
     watcher.set_read_timeout(Some(Duration::new(0, 100))).unwrap();
-    let offset;
+
+    // Refresh the main menu a few times until the caster is seen. Set a low limit.
+    let max_checks = 5;
+    let mut offset;
+    let mut loops = 0;
     loop {
         watcher.read(&mut buf).unwrap();
         // Scan for the position of the first '#' in the stream, this indicates the banner. Keep
         // reading from the socket until it's found.
         if let Some(i) = buf.iter().position(|b| *b == 0x23) {
             offset = i;
-            break;
+            let utf8_buf = str::from_utf8(&buf[offset..]).unwrap();
+            let found_caster = utf8_buf.find("caster1");
+            if found_caster.is_some() {
+                break;
+            }
+
+            loops += 1;
+            if loops > max_checks {
+                break;
+            }
+
+            watcher.write(&[32]).unwrap();
         }
     }
 
-    let utf8_buf = str::from_utf8(&buf[offset..]).unwrap();
-    assert!(utf8_buf.find("caster1").is_some(), "Caster available to watch");
+    assert!(loops <= max_checks);
+
 }
 
 
