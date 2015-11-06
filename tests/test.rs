@@ -120,11 +120,16 @@ fn can_cast() {
     watcher.set_read_timeout(Some(Duration::new(0, 100))).unwrap();
 
     // Refresh the main menu a few times until the caster is seen. Set a low limit.
-    let max_checks = 5;
+    let max_checks = 10;
     let mut offset;
     let mut loops = 0;
     loop {
-        watcher.read(&mut buf).unwrap();
+        let res = watcher.read(&mut buf);
+        // Read timeout, try again.
+        if res.is_err() {
+            loops += 1;
+            continue;
+        }
         // Scan for the position of the first '#' in the stream, this indicates the banner. Keep
         // reading from the socket until it's found.
         if let Some(i) = buf.iter().position(|b| *b == 0x23) {
