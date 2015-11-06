@@ -292,9 +292,8 @@ impl Termcastd {
     }
 
     fn watcher_menu(&self, offset: usize) -> Vec<u8> {
-        fn caster_menu_entry(choice: &'static str, caster: &Caster) -> String {
-            let _caster = caster;
-            format!(" {}) {}", choice, "caster")
+        fn caster_menu_entry(choice: &'static str, caster: &Caster, unknown_name: &String) -> String {
+            format!(" {}) {}", choice, caster.name.as_ref().unwrap_or(unknown_name))
         }
 
         let mut offset = offset;
@@ -321,12 +320,13 @@ impl Termcastd {
         let mut menu: Vec<u8> = Vec::with_capacity(80*24);
         menu.extend(menu_header.as_bytes());
 
+        let unknown_name = String::from("unknown");
         let caster_choices = self.casters.values()
                     .skip(offset)
                     .take(CASTERS_PER_SCREEN);
         for c in caster_choices.zip(MENU_CHOICES.iter()) {
             let (caster, choice) = c;
-            menu.extend(caster_menu_entry(choice, caster).as_bytes());
+            menu.extend(caster_menu_entry(choice, caster, &unknown_name).as_bytes());
         }
 
         return menu;
