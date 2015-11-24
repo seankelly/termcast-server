@@ -38,7 +38,7 @@ struct Caster {
     token: Token,
     name: Option<String>,
     cast_buffer: RingBuffer,
-    watchers: Vec<Rc<RefCell<Watcher>>>,
+    watchers: Vec<WatcherLite>,
 }
 
 struct Watcher {
@@ -191,8 +191,7 @@ impl Caster {
     }
 
     fn relay_input(&mut self, input: &[u8]) {
-        for w in self.watchers.iter() {
-            let mut watcher = w.borrow_mut();
+        for watcher in self.watchers.iter_mut() {
             let res = watcher.sock.write(&input);
             // Need to notify the watcher has an error.
             if res.is_err() {
@@ -362,8 +361,7 @@ impl Termcastd {
                             // reset these watchers back to the main menu. Everything
                             // will be dropped after the end of the match when the
                             // entry is removed.
-                            for w in caster.watchers.iter() {
-                                let watcher = w.borrow();
+                            for watcher in caster.watchers.iter() {
                                 let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
                             }
                         }
@@ -439,7 +437,7 @@ impl Termcastd {
                 // Assemble all of the watchers, stuff them in a vector, and send it up to have
                 // those watchers reset to the main menu.
                 let watchers = caster.watchers.iter()
-                    .map(|w| w.borrow().token).collect();
+                    .map(|w| w.token).collect();
 
                 event_loop.deregister(&caster.sock);
 
