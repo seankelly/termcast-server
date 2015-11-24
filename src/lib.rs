@@ -442,8 +442,8 @@ impl Termcastd {
     // Section for Watcher functions.
     ////////////////////////////////////
     fn new_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>) {
-        if let Ok(opt) = self.listen_watcher.accept() {
-            if let Some(sock) = opt {
+        match self.listen_watcher.accept() {
+            Ok(Some(sock)) => {
                 let token = self.next_token();
                 let mut watcher = Watcher {
                     offset: 0,
@@ -488,6 +488,10 @@ impl Termcastd {
                     }
                 }
             }
+            Ok(None) => {
+            },
+            Err(e) => {
+            },
         }
     }
 
