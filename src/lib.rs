@@ -49,6 +49,11 @@ struct Watcher {
     state: WatcherState,
 }
 
+struct WatcherLite {
+    sock: TcpStream,
+    token: Token,
+}
+
 struct Termcastd {
     listen_caster: TcpListener,
     listen_watcher: TcpListener,
@@ -148,6 +153,15 @@ impl Watcher {
         }
 
         return WatcherAction::Nothing;
+    }
+
+    fn caster_copy(&mut self) -> Result<WatcherLite, Error> {
+        let socket = try!(self.sock.try_clone());
+        let lite = WatcherLite {
+            sock: socket,
+            token: self.token,
+        };
+        Ok(lite)
     }
 }
 
