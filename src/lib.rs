@@ -500,8 +500,9 @@ impl Termcastd {
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     });
-                //return watcher_init;
-                Ok(())
+
+                // Success does not need to return anything.
+                watcher_init.map(|_| ())
             }
             Ok(None) => {
                 Ok(())
