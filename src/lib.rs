@@ -480,7 +480,7 @@ impl Termcastd {
 
                 let menu = self.watcher_menu(offset);
 
-                let foo = self.watchers.get_mut(&token)
+                let watcher_init = self.watchers.get_mut(&token)
                     .ok_or(Error::new(ErrorKind::NotFound, ""))
                     .and_then(|w| {
                         w.sock.write(&term::disable_linemode())
@@ -500,14 +500,16 @@ impl Termcastd {
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     });
+                //return watcher_init;
+                Ok(())
             }
             Ok(None) => {
+                Ok(())
             },
-            Err(e) => {
+            Err(err) => {
+                Err(err)
             },
         }
-
-        Ok(())
     }
 
     /// Wrapper function for when the casters structure needs to be modified.
