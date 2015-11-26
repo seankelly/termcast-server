@@ -484,19 +484,19 @@ impl Termcastd {
                     .ok_or(Error::new(ErrorKind::NotFound, ""))
                     .and_then(|w| {
                         w.sock.write(&term::disable_linemode())
-                            .map_err(|err| event_loop.deregister(&w.sock))
+                            .map_err(|_err| event_loop.deregister(&w.sock))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     })
                     .and_then(|w| {
                         w.sock.write(&term::disable_local_echo())
-                            .map_err(|err| event_loop.deregister(&w.sock))
+                            .map_err(|_err| event_loop.deregister(&w.sock))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     })
                     .and_then(|w| {
                         w.sock.write(&menu)
-                            .map_err(|err| event_loop.deregister(&w.sock))
+                            .map_err(|_err| event_loop.deregister(&w.sock))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     });
