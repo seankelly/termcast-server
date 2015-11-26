@@ -9,7 +9,7 @@ mod ring;
 mod term;
 
 use mio::*;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 use std::io::Read;
 use std::io::Write;
 use mio::tcp::{TcpListener, TcpStream};
@@ -453,7 +453,7 @@ impl Termcastd {
 
     // Section for Watcher functions.
     ////////////////////////////////////
-    fn new_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>) {
+    fn new_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>) -> Result<(), Error> {
         match self.listen_watcher.accept() {
             Ok(Some(sock)) => {
                 let token = self.next_token();
@@ -464,47 +464,50 @@ impl Termcastd {
                     token: token,
                     state: WatcherState::Connecting,
                 };
-                let res = event_loop.register_opt(
+
+                try!(event_loop.register_opt(
                     &watcher.sock,
                     token,
                     EventSet::all(),
                     PollOpt::edge(),
-                );
-                if res.is_ok() {
-                    self.number_watching += 1;
-                    if watcher.sock.write(&term::disable_linemode()).is_err() {
-                        event_loop.deregister(&watcher.sock).unwrap();
-                        return;
-                    }
+                ));
 
-                    if watcher.sock.write(&term::disable_local_echo()).is_err() {
-                        event_loop.deregister(&watcher.sock).unwrap();
-                        return;
-                    }
+                self.number_watching += 1;
 
-                    let client = Client::Watcher;
-                    self.clients.insert(token, client);
-                    self.watchers.insert(token, Rc::new(RefCell::new(watcher)));
+                let offset = watcher.offset;
+                self.clients.insert(token, Client::Watcher);
+                self.watchers.insert(token, watcher);
 
-                    let mut watcher = self.watchers.get(&token).unwrap().borrow_mut();
-                    let menu = self.watcher_menu(watcher.offset);
-                    watcher.state = WatcherState::MainMenu;
-                    if watcher.sock.write(&menu).is_err() {
-                        /*
-                        self.clients.remove(&token);
-                        self.watchers.remove(&token);
-                        */
-                        if let Err(e) = event_loop.deregister(&watcher.sock) {
-                            // TODO: Fill in something here?
-                        }
-                    }
-                }
+                let menu = self.watcher_menu(offset);
+
+                let foo = self.watchers.get_mut(&token)
+                    .ok_or(Error::new(ErrorKind::NotFound, ""))
+                    .and_then(|w| {
+                        w.sock.write(&term::disable_linemode())
+                            .map_err(|err| event_loop.deregister(&w.sock))
+                            .map_err(|_| Error::new(ErrorKind::Other, ""))
+                            .map(|_| w)
+                    })
+                    .and_then(|w| {
+                        w.sock.write(&term::disable_local_echo())
+                            .map_err(|err| event_loop.deregister(&w.sock))
+                            .map_err(|_| Error::new(ErrorKind::Other, ""))
+                            .map(|_| w)
+                    })
+                    .and_then(|w| {
+                        w.sock.write(&menu)
+                            .map_err(|err| event_loop.deregister(&w.sock))
+                            .map_err(|_| Error::new(ErrorKind::Other, ""))
+                            .map(|_| w)
+                    });
             }
             Ok(None) => {
             },
             Err(e) => {
             },
         }
+
+        Ok(())
     }
 
     /// Wrapper function for when the casters structure needs to be modified.
