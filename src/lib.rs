@@ -58,7 +58,7 @@ struct Termcastd {
     listen_caster: TcpListener,
     listen_watcher: TcpListener,
     clients: HashMap<Token, Client>,
-    watchers: HashMap<Token, Rc<RefCell<Watcher>>>,
+    watchers: HashMap<Token, Watcher>,
     casters: HashMap<Token, Caster>,
     caster_auth: CasterAuth,
     next_token_id: usize,
@@ -371,7 +371,7 @@ impl Termcastd {
                 &Client::Watcher => {
                     if let Entry::Occupied(watcher_entry) = self.watchers.entry(token) {
                         {
-                            let watcher = watcher_entry.get().borrow();
+                            let watcher = watcher_entry.get();
                             let res = event_loop.deregister(&watcher.sock);
                         }
                         self.number_watching -= 1;
@@ -521,8 +521,7 @@ impl Termcastd {
     /// Handle actions affecting the watcher in this method. Actions that affect casters will be
     /// sent up the call chain.
     fn watcher_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<WatcherAction, ()> {
-        if let Some(w) = self.watchers.get(&token) {
-            let mut watcher = w.borrow_mut();
+        if let Some(mut watcher) = self.watchers.get_mut(&token) {
             loop {
                 match watcher.parse_input() {
                     // The watcher returns the overall offset. Check that offset points to a valid
@@ -531,7 +530,9 @@ impl Termcastd {
                     WatcherAction::Watch(offset) => {},
                     WatcherAction::StopWatching => { },
                     WatcherAction::ShowMenu => {
-                        let menu = self.watcher_menu(watcher.offset);
+                        // FIXME: Send actual menu.
+                        //let menu = self.watcher_menu(watcher.offset);
+                        let menu = vec![0];
                         let res = watcher.sock.write(&menu);
                         if res.is_err() {
                             return Err(());
