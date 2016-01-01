@@ -306,7 +306,7 @@ impl Termcastd {
 
     fn watcher_menu(&self, offset: usize) -> Vec<u8> {
         fn caster_menu_entry(choice: &'static str, caster: &Caster, unknown_name: &String) -> String {
-            format!(" {}) {}", choice, caster.name.as_ref().unwrap_or(unknown_name))
+            format!(" {}) {}\r\n", choice, caster.name.as_ref().unwrap_or(unknown_name))
         }
 
         let mut offset = offset;
