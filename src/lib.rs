@@ -345,7 +345,7 @@ impl Termcastd {
         }
 
         let menu_footer = concat!(
-            "\r\n\r\n",
+            "\r\n",
             "Watch which session? ('q' quits)",
             " ",
         );
