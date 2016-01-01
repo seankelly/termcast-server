@@ -344,6 +344,13 @@ impl Termcastd {
             menu.extend(caster_menu_entry(choice, caster, &unknown_name).as_bytes());
         }
 
+        let menu_footer = concat!(
+            "\r\n\r\n",
+            "Watch which session? ('q' quits)",
+            " ",
+        );
+        menu.extend(menu_footer.as_bytes());
+
         return menu;
     }
 
