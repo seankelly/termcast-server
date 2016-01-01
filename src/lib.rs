@@ -508,6 +508,10 @@ impl Termcastd {
                             .map_err(|_err| event_loop.deregister(&w.sock))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
+                    })
+                    .and_then(|w| {
+                        w.state = WatcherState::MainMenu;
+                        Ok(w)
                     });
 
                 // Success does not need to return anything.
