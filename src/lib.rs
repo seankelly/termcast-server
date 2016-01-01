@@ -105,7 +105,7 @@ enum WatcherState {
 enum WatcherAction {
     Exit,
     Nothing,
-    ShowMenu,
+    ShowMenu(usize),
     StopWatching,
     Watch(usize),
 }
@@ -142,7 +142,7 @@ impl Watcher {
                             },
                             // Any other character, refresh the menu.
                             _ => {
-                                return WatcherAction::ShowMenu;
+                                return WatcherAction::ShowMenu(self.offset);
                             },
                         }
                     },
@@ -548,14 +548,8 @@ impl Termcastd {
                     // refresh the menu for that watcher.
                     WatcherAction::Watch(offset) => {},
                     WatcherAction::StopWatching => { },
-                    WatcherAction::ShowMenu => {
-                        // FIXME: Send actual menu.
-                        //let menu = self.watcher_menu(watcher.offset);
-                        let menu = vec![0];
-                        let res = watcher.sock.write(&menu);
-                        if res.is_err() {
-                            return Err(());
-                        }
+                    WatcherAction::ShowMenu(offset) => {
+                        return Ok(WatcherAction::ShowMenu(offset));
                     },
                     WatcherAction::Exit => {
                         return Ok(WatcherAction::Exit);
