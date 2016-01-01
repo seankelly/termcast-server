@@ -123,7 +123,7 @@ impl Watcher {
                         if *byte == 113 {
                             // This will reset the state back to the main menu.
                             self.state = WatcherState::MainMenu;
-                            return WatcherAction::ShowMenu;
+                            return WatcherAction::StopWatching;
                         }
                     },
                     WatcherState::MainMenu => {
