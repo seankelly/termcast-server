@@ -320,6 +320,7 @@ impl Termcastd {
                      else { new_offset - 1 };
         }
 
+        let num_casters = self.casters.values().filter(|c| c.name.is_some()).count();
         let menu_header = format!(
             concat!(
                 "{}{}",
@@ -328,7 +329,7 @@ impl Termcastd {
                 " ## {} sessions available. {} watchers connected.\r\n\r\n",
             ),
             term::clear_screen(), term::reset_cursor(),
-            self.casters.len(), self.watchers.len());
+            num_casters, self.watchers.len());
 
         let mut menu: Vec<u8> = Vec::with_capacity(80*24);
         menu.extend(menu_header.as_bytes());
