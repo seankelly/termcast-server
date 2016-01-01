@@ -532,6 +532,10 @@ impl Termcastd {
             Ok(WatcherAction::Exit) => {
                 let _ = self.watchers.remove(&token);
             },
+            Ok(WatcherAction::ShowMenu(offset)) => {
+                let menu = self.watcher_menu(offset);
+                self.watcher_output(token, &menu);
+            },
             Ok(_) => {},
             Err(_) => {}
         }
@@ -563,6 +567,11 @@ impl Termcastd {
         }
 
         Ok(WatcherAction::Nothing)
+    }
+
+    fn watcher_output(&mut self, token: Token, output: &[u8]) -> Option<Error> {
+        self.watchers.get_mut(&token)
+                     .and_then(|w| w.sock.write(&output).err())
     }
 
     fn reset_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
