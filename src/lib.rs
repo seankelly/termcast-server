@@ -335,6 +335,7 @@ impl Termcastd {
 
         let unknown_name = String::from("unknown");
         let caster_choices = self.casters.values()
+                    .filter(|c| c.name.is_some())
                     .skip(offset)
                     .take(CASTERS_PER_SCREEN);
         for c in caster_choices.zip(MENU_CHOICES.iter()) {
