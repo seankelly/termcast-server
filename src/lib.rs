@@ -314,8 +314,9 @@ impl Termcastd {
                     caster.watchers.len())
         }
 
+        let valid_casters: Vec<_> = self.casters.values().filter(|c| c.name.is_some()).collect();
         let mut offset = offset;
-        let num_casters = self.casters.values().filter(|c| c.name.is_some()).count();
+        let num_casters = valid_casters.len();
         // If the offset is too high, reset it to the last page.
         if offset > num_casters {
             let num_casters = self.casters.len();
@@ -340,8 +341,7 @@ impl Termcastd {
         menu.extend(menu_header.as_bytes());
 
         let unknown_name = String::from("unknown");
-        let caster_choices = self.casters.values()
-                    .filter(|c| c.name.is_some())
+        let caster_choices = valid_casters.iter()
                     .skip(offset)
                     .take(CASTERS_PER_SCREEN);
         for c in caster_choices.zip(MENU_CHOICES.iter()) {
