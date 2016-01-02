@@ -473,7 +473,7 @@ impl Termcastd {
         match self.listen_watcher.accept() {
             Ok(Some(sock)) => {
                 let token = self.next_token();
-                let mut watcher = Watcher {
+                let watcher = Watcher {
                     offset: 0,
                     sock: sock,
                     input_buffer: [0; 128],
