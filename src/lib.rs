@@ -141,7 +141,6 @@ impl Watcher {
                             }
                             113 => { // q
                                 self.state = WatcherState::Disconnecting;
-                                //channel.send(TermcastdMessage::WatcherDisconnected(token));
                                 return WatcherAction::Exit;
                             },
                             // Any other character, refresh the menu.
