@@ -15,11 +15,9 @@ use std::io::{Error, ErrorKind};
 use std::io::Read;
 use std::io::Write;
 use mio::tcp::{TcpListener, TcpStream};
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::net::SocketAddr;
-use std::rc::Rc;
 use std::str;
 
 use auth::CasterAuth;
