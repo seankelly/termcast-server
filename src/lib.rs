@@ -1,3 +1,4 @@
+extern crate chrono;
 extern crate mio;
 #[macro_use]
 extern crate log;
@@ -8,6 +9,7 @@ mod auth;
 mod ring;
 mod term;
 
+use chrono::{DateTime, Duration, UTC};
 use mio::*;
 use std::io::{Error, ErrorKind};
 use std::io::Read;
@@ -39,6 +41,8 @@ struct Caster {
     name: Option<String>,
     cast_buffer: RingBuffer,
     watchers: Vec<WatcherLite>,
+    connected: DateTime<UTC>,
+    last_byte_received: DateTime<UTC>,
 }
 
 struct Watcher {
@@ -408,6 +412,8 @@ impl Termcastd {
                     name: None,
                     cast_buffer: RingBuffer::new(90_000),
                     watchers: Vec::new(),
+                    connected: UTC::now(),
+                    last_byte_received: UTC::now(),
                 };
                 let res = event_loop.register_opt(
                     &caster.sock,
