@@ -315,8 +315,9 @@ impl Termcastd {
         }
 
         let mut offset = offset;
+        let num_casters = self.casters.values().filter(|c| c.name.is_some()).count();
         // If the offset is too high, reset it to the last page.
-        if offset > self.casters.len() {
+        if offset > num_casters {
             let num_casters = self.casters.len();
             let page_length = MENU_CHOICES.len();
             let pages = num_casters / page_length;
@@ -325,7 +326,6 @@ impl Termcastd {
                      else { new_offset - 1 };
         }
 
-        let num_casters = self.casters.values().filter(|c| c.name.is_some()).count();
         let menu_header = format!(
             concat!(
                 "{}{}",
