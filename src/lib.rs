@@ -217,6 +217,8 @@ impl Watcher {
                             },
                             // Any other character, refresh the menu.
                             _ => {
+                                // TODO: Replace rest of this block with the following line.
+                                //self.send_menu(&menu_view);
                                 let (menu, fixed_offset) = menu_view.render(self.offset);
                                 if let Some(offset) = fixed_offset {
                                     self.offset = offset;
