@@ -43,6 +43,19 @@ struct Caster {
     last_byte_received: DateTime<UTC>,
 }
 
+struct CasterMenuEntry {
+    token: Token,
+    name: String,
+    num_watchers: usize,
+    connected: DateTime<UTC>,
+    last_byte_received: DateTime<UTC>,
+}
+
+struct MenuView {
+    caster_entries: Vec<CasterMenuEntry>,
+    total_watchers: usize,
+}
+
 struct Watcher {
     offset: usize,
     sock: TcpStream,
@@ -112,6 +125,71 @@ enum WatcherAction {
     Watch(usize),
 }
 
+
+impl MenuView {
+    fn render(&self, offset: usize) -> (String, Option<usize>) {
+        fn caster_menu_entry(now: &DateTime<UTC>, choice: &'static str,
+                             caster: &CasterMenuEntry) -> String {
+            format!(" {}) {} (idle ???, connected {}, {} watching)\r\n",
+                    choice, caster.name,
+                    caster.connected.format("%F %T"),
+                    caster.num_watchers)
+        }
+
+        let num_casters = self.caster_entries.len();
+        // If the offset is too high, reset it to the last page.
+        let actual_offset = if offset < num_casters {
+            offset
+        }
+        else {
+            let page_length = MENU_CHOICES.len();
+            let pages = num_casters / page_length;
+            if num_casters % page_length != 0 {
+                pages * page_length
+            }
+            else {
+                (pages - 1) * page_length
+            }
+        };
+
+        let menu_header = format!(
+            concat!(
+                "{}{}",
+                "\r\n",
+                " ## Termcast\r\n",
+                " ## {} sessions available. {} watchers connected.\r\n\r\n",
+            ),
+            term::clear_screen(), term::reset_cursor(),
+            num_casters, self.total_watchers);
+
+        let mut menu = String::with_capacity(80*24);
+        menu.push_str(&menu_header);
+
+        let now = UTC::now();
+        let caster_choices = self.caster_entries.iter()
+                    .skip(offset)
+                    .take(CASTERS_PER_SCREEN);
+        for c in caster_choices.zip(MENU_CHOICES.iter()) {
+            let (caster, choice) = c;
+            menu.push_str(&caster_menu_entry(&now, choice, caster));
+        }
+
+        let menu_footer = concat!(
+            "\r\n",
+            "Watch which session? ('q' quits)",
+            " ",
+        );
+        menu.push_str(&menu_footer);
+
+        //return menu;
+        if actual_offset != offset {
+            return (menu, None);
+        }
+        else {
+            return (menu, Some(actual_offset));
+        }
+    }
+}
 
 impl Watcher {
     fn parse_input(&mut self) -> WatcherAction {
@@ -303,6 +381,26 @@ impl Termcastd {
         let token = Token(self.next_token_id);
         self.next_token_id += 1;
         return token;
+    }
+
+    fn menu_view(&self) -> MenuView {
+        let valid_casters = self.casters.values()
+            .filter(|c| c.name.is_some())
+            .map(|c| {
+                CasterMenuEntry {
+                    token: c.token,
+                    name: c.name.as_ref().unwrap().clone(),
+                    num_watchers: c.watchers.len(),
+                    connected: c.connected,
+                    last_byte_received: c.last_byte_received,
+                }
+            });
+
+        let view = MenuView {
+            caster_entries: valid_casters.collect(),
+            total_watchers: self.watchers.len(),
+        };
+        return view;
     }
 
     fn watcher_menu(&self, offset: usize) -> Vec<u8> {
