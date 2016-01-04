@@ -679,11 +679,16 @@ impl Termcastd {
     }
 
     fn reset_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
-        if let Some(w) = self.watchers.get_mut(&token) {
-        }
-        else {
-            // Got an event for a token with no matching socket.
-        }
+        let menu_view = self.menu_view();
+        self.watchers.get_mut(&token)
+                     .and_then(|w| {
+                         w.state = WatcherState::MainMenu;
+                         let (menu, fixed_offset) = menu_view.render(w.offset);
+                         if let Some(offset) = fixed_offset {
+                             w.offset = offset;
+                         }
+                         w.sock.write(&menu.as_bytes()).err()
+                     });
     }
 }
 
