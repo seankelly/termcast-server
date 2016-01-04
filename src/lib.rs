@@ -624,11 +624,6 @@ impl Termcastd {
         Ok(WatcherAction::Nothing)
     }
 
-    fn watcher_output(&mut self, token: Token, output: &[u8]) -> Option<Error> {
-        self.watchers.get_mut(&token)
-                     .and_then(|w| w.sock.write(&output).err())
-    }
-
     fn reset_watcher(&mut self, token: Token) {
         let menu_view = self.menu_view();
         self.watchers.get_mut(&token)
