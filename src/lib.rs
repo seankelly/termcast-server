@@ -197,7 +197,7 @@ impl Watcher {
                 match self.state {
                     WatcherState::Watching => {
                         // Pressing 'q' while watching returns the watcher to the main menu.
-                        if *byte == 113 {
+                        if *byte == b'q' {
                             // This will reset the state back to the main menu.
                             self.state = WatcherState::MainMenu;
                             return WatcherAction::StopWatching;
@@ -205,14 +205,13 @@ impl Watcher {
                     },
                     WatcherState::MainMenu => {
                         match *byte {
-                            97...112 => { // a...p
-                                // a = 97.
-                                let page_offset = *byte as usize - 97;
+                            b'a'...b'p' => {
+                                let page_offset = (*byte - b'a') as usize;
                                 // Check if the entry picked is still valid.
                                 let caster_offset = self.offset + page_offset;
                                 return WatcherAction::Watch(caster_offset);
                             }
-                            113 => { // q
+                            b'q' => {
                                 self.state = WatcherState::Disconnecting;
                                 return WatcherAction::Exit;
                             },
