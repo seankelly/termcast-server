@@ -144,7 +144,7 @@ impl MenuView {
         else {
             let page_length = MENU_CHOICES.len();
             let pages = num_casters / page_length;
-            if num_casters % page_length != 0 {
+            if num_casters == 0 || num_casters % page_length != 0 {
                 pages * page_length
             }
             else {
