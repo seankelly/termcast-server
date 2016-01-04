@@ -192,7 +192,7 @@ impl MenuView {
 }
 
 impl Watcher {
-    fn parse_input(&mut self) -> WatcherAction {
+    fn parse_input(&mut self, menu_view: &MenuView) -> WatcherAction {
         while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
             let each_byte = 0..num_bytes;
             //let channel = event_loop.channel();
@@ -221,7 +221,11 @@ impl Watcher {
                             },
                             // Any other character, refresh the menu.
                             _ => {
-                                return WatcherAction::ShowMenu(self.offset);
+                                let (menu, fixed_offset) = menu_view.render(self.offset);
+                                if let Some(offset) = fixed_offset {
+                                    self.offset = offset;
+                                }
+                                self.sock.write(&menu.as_bytes());
                             },
                         }
                     },
@@ -637,10 +641,6 @@ impl Termcastd {
             Ok(WatcherAction::Exit) => {
                 let _ = self.watchers.remove(&token);
             },
-            Ok(WatcherAction::ShowMenu(offset)) => {
-                let menu = self.watcher_menu(offset);
-                self.watcher_output(token, &menu);
-            },
             Ok(_) => {},
             Err(_) => {}
         }
@@ -649,17 +649,16 @@ impl Termcastd {
     /// Handle actions affecting the watcher in this method. Actions that affect casters will be
     /// sent up the call chain.
     fn watcher_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<WatcherAction, ()> {
+        let menu_view = self.menu_view();
         if let Some(mut watcher) = self.watchers.get_mut(&token) {
             loop {
-                match watcher.parse_input() {
+                match watcher.parse_input(&menu_view) {
                     // The watcher returns the overall offset. Check that offset points to a valid
                     // caster. If it does, move the watcher to watch that caster. If it does not,
                     // refresh the menu for that watcher.
                     WatcherAction::Watch(offset) => {},
                     WatcherAction::StopWatching => { },
-                    WatcherAction::ShowMenu(offset) => {
-                        return Ok(WatcherAction::ShowMenu(offset));
-                    },
+                    WatcherAction::ShowMenu(offset) => {},
                     WatcherAction::Exit => {
                         return Ok(WatcherAction::Exit);
                     },
