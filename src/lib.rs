@@ -120,7 +120,6 @@ enum WatcherState {
 enum WatcherAction {
     Exit,
     Nothing,
-    ShowMenu(usize),
     StopWatching,
     Watch(usize),
 }
@@ -609,7 +608,6 @@ impl Termcastd {
                     // refresh the menu for that watcher.
                     WatcherAction::Watch(offset) => {},
                     WatcherAction::StopWatching => { },
-                    WatcherAction::ShowMenu(offset) => {},
                     WatcherAction::Exit => {
                         return Ok(WatcherAction::Exit);
                     },
