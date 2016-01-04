@@ -207,7 +207,6 @@ impl Watcher {
                         match *byte {
                             b'a'...b'p' => {
                                 let page_offset = (*byte - b'a') as usize;
-                                // Check if the entry picked is still valid.
                                 let caster_offset = self.offset + page_offset;
                                 return WatcherAction::Watch(caster_offset);
                             }
