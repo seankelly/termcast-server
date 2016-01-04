@@ -407,60 +407,6 @@ impl Termcastd {
         return view;
     }
 
-    fn watcher_menu(&self, offset: usize) -> Vec<u8> {
-        fn caster_menu_entry(choice: &'static str, caster: &Caster, unknown_name: &String) -> String {
-            let now = UTC::now();
-            format!(" {}) {} (idle ???, connected {}, {} watching)\r\n",
-                    choice, caster.name.as_ref().unwrap_or(unknown_name),
-                    caster.connected.format("%F %T"),
-                    caster.watchers.len())
-        }
-
-        let valid_casters: Vec<_> = self.casters.values().filter(|c| c.name.is_some()).collect();
-        let mut offset = offset;
-        let num_casters = valid_casters.len();
-        // If the offset is too high, reset it to the last page.
-        if offset > num_casters {
-            let num_casters = self.casters.len();
-            let page_length = MENU_CHOICES.len();
-            let pages = num_casters / page_length;
-            let new_offset = pages * page_length;
-            offset = if num_casters % num_casters != 0 { new_offset }
-                     else { new_offset - 1 };
-        }
-
-        let menu_header = format!(
-            concat!(
-                "{}{}",
-                "\r\n",
-                " ## Termcast\r\n",
-                " ## {} sessions available. {} watchers connected.\r\n\r\n",
-            ),
-            term::clear_screen(), term::reset_cursor(),
-            num_casters, self.watchers.len());
-
-        let mut menu: Vec<u8> = Vec::with_capacity(80*24);
-        menu.extend(menu_header.as_bytes());
-
-        let unknown_name = String::from("unknown");
-        let caster_choices = valid_casters.iter()
-                    .skip(offset)
-                    .take(CASTERS_PER_SCREEN);
-        for c in caster_choices.zip(MENU_CHOICES.iter()) {
-            let (caster, choice) = c;
-            menu.extend(caster_menu_entry(choice, caster, &unknown_name).as_bytes());
-        }
-
-        let menu_footer = concat!(
-            "\r\n",
-            "Watch which session? ('q' quits)",
-            " ",
-        );
-        menu.extend(menu_footer.as_bytes());
-
-        return menu;
-    }
-
     // Section for Caster and Watcher functions.
     ////////////////////////////////////
     fn handle_disconnect(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
