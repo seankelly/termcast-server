@@ -493,7 +493,7 @@ impl Termcastd {
     fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Err(watchers) = self.caster_input(event_loop, token) {
             for watcher in watchers.iter() {
-                self.reset_watcher(event_loop, *watcher);
+                self.reset_watcher(*watcher);
             }
 
             let _ = self.casters.remove(&token);
@@ -587,8 +587,8 @@ impl Termcastd {
     }
 
     /// Wrapper function for when the casters structure needs to be modified.
-    fn read_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
-        match self.watcher_input(event_loop, token) {
+    fn read_watcher(&mut self, token: Token) {
+        match self.watcher_input(token) {
             Ok(WatcherAction::Exit) => {
                 let _ = self.watchers.remove(&token);
             },
@@ -599,7 +599,7 @@ impl Termcastd {
 
     /// Handle actions affecting the watcher in this method. Actions that affect casters will be
     /// sent up the call chain.
-    fn watcher_input(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) -> Result<WatcherAction, ()> {
+    fn watcher_input(&mut self, token: Token) -> Result<WatcherAction, ()> {
         let menu_view = self.menu_view();
         if let Some(mut watcher) = self.watchers.get_mut(&token) {
             loop {
@@ -629,7 +629,7 @@ impl Termcastd {
                      .and_then(|w| w.sock.write(&output).err())
     }
 
-    fn reset_watcher(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
+    fn reset_watcher(&mut self, token: Token) {
         let menu_view = self.menu_view();
         self.watchers.get_mut(&token)
                      .and_then(|w| {
@@ -660,7 +660,7 @@ impl Handler for Termcastd {
                         self.read_caster(event_loop, token);
                     },
                     (true, false, false, Client::Watcher) => {
-                        self.read_watcher(event_loop, token);
+                        self.read_watcher(token);
                     },
                     (_, true, false, _) => {
                         self.handle_disconnect(event_loop, token);
