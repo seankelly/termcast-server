@@ -238,6 +238,14 @@ impl Watcher {
         return WatcherAction::Nothing;
     }
 
+    fn send_menu(&mut self, menu_view: &MenuView) -> Result<usize, Error> {
+        let (menu, fixed_offset) = menu_view.render(self.offset);
+        if let Some(offset) = fixed_offset {
+            self.offset = offset;
+        }
+        self.sock.write(&menu.as_bytes())
+    }
+
     fn caster_copy(&mut self) -> Result<WatcherLite, Error> {
         let socket = try!(self.sock.try_clone());
         let lite = WatcherLite {
@@ -560,8 +568,7 @@ impl Termcastd {
                     })
                     .and_then(|w| {
                         w.state = WatcherState::MainMenu;
-                        let (menu, _fixed_offset) = menu_view.render(w.offset);
-                        w.sock.write(&menu.as_bytes())
+                        w.send_menu(&menu_view)
                             .map_err(|_err| event_loop.deregister(&w.sock))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
@@ -627,11 +634,7 @@ impl Termcastd {
         self.watchers.get_mut(&token)
                      .and_then(|w| {
                          w.state = WatcherState::MainMenu;
-                         let (menu, fixed_offset) = menu_view.render(w.offset);
-                         if let Some(offset) = fixed_offset {
-                             w.offset = offset;
-                         }
-                         w.sock.write(&menu.as_bytes()).err()
+                         w.send_menu(&menu_view).err()
                      });
     }
 }
