@@ -596,7 +596,7 @@ impl Termcastd {
                 self.clients.insert(token, Client::Watcher);
                 self.watchers.insert(token, watcher);
 
-                let menu = self.watcher_menu(offset);
+                let menu_view = self.menu_view();
 
                 let watcher_init = self.watchers.get_mut(&token)
                     .ok_or(Error::new(ErrorKind::NotFound, ""))
@@ -613,14 +613,12 @@ impl Termcastd {
                             .map(|_| w)
                     })
                     .and_then(|w| {
-                        w.sock.write(&menu)
+                        w.state = WatcherState::MainMenu;
+                        let (menu, _fixed_offset) = menu_view.render(w.offset);
+                        w.sock.write(&menu.as_bytes())
                             .map_err(|_err| event_loop.deregister(&w.sock))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
-                    })
-                    .and_then(|w| {
-                        w.state = WatcherState::MainMenu;
-                        Ok(w)
                     });
 
                 // Success does not need to return anything.
