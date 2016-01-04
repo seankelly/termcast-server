@@ -368,6 +368,15 @@ impl Caster {
             return Err(AuthResults::TryAgain);
         }
     }
+
+    fn menu_entry(&self) -> CasterMenuEntry {
+        CasterMenuEntry {
+            name: self.name.as_ref().unwrap().clone(),
+            num_watchers: self.watchers.len(),
+            connected: self.connected,
+            last_byte_received: self.last_byte_received,
+        }
+    }
 }
 
 impl Termcastd {
@@ -394,14 +403,7 @@ impl Termcastd {
     fn menu_view(&self) -> MenuView {
         let valid_casters = self.casters.values()
             .filter(|c| c.name.is_some())
-            .map(|c| {
-                CasterMenuEntry {
-                    name: c.name.as_ref().unwrap().clone(),
-                    num_watchers: c.watchers.len(),
-                    connected: c.connected,
-                    last_byte_received: c.last_byte_received,
-                }
-            });
+            .map(|c| c.menu_entry());
 
         let view = MenuView {
             caster_entries: valid_casters.collect(),
