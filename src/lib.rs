@@ -44,7 +44,6 @@ struct Caster {
 }
 
 struct CasterMenuEntry {
-    token: Token,
     name: String,
     num_watchers: usize,
     connected: DateTime<UTC>,
@@ -397,7 +396,6 @@ impl Termcastd {
             .filter(|c| c.name.is_some())
             .map(|c| {
                 CasterMenuEntry {
-                    token: c.token,
                     name: c.name.as_ref().unwrap().clone(),
                     num_watchers: c.watchers.len(),
                     connected: c.connected,
