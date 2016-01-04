@@ -193,7 +193,6 @@ impl Watcher {
     fn parse_input(&mut self, menu_view: &MenuView) -> WatcherAction {
         while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
             let each_byte = 0..num_bytes;
-            //let channel = event_loop.channel();
             for (_offset, byte) in each_byte.zip(self.input_buffer.iter()) {
                 match self.state {
                     WatcherState::Watching => {
