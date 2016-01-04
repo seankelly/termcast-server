@@ -180,7 +180,6 @@ impl MenuView {
         );
         menu.push_str(&menu_footer);
 
-        //return menu;
         if actual_offset != offset {
             return (menu, None);
         }
