@@ -545,7 +545,6 @@ impl Termcastd {
 
                 self.number_watching += 1;
 
-                let offset = watcher.offset;
                 self.clients.insert(token, Client::Watcher);
                 self.watchers.insert(token, watcher);
 
