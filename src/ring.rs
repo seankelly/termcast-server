@@ -75,6 +75,16 @@ impl RingBuffer {
         self.index = 0;
     }
 
+    pub fn clone(&self) -> Vec<u8> {
+        let mut vec = Vec::with_capacity(self.len());
+        let offset = self.get_offset();
+        vec.extend_from_slice(&self.buffer[offset..self.buffer.len()]);
+        if offset != 0 {
+            vec.extend_from_slice(&self.buffer[0..offset]);
+        }
+        return vec;
+    }
+
     fn get_offset(&self) -> usize {
         if self.buffer.len() < self.size { 0 } else { self.index }
     }
@@ -169,5 +179,23 @@ mod tests {
         assert_eq!(ring.len(), 3);
         ring.clear();
         assert_eq!(ring.len(), 0);
+    }
+
+    #[test]
+    fn clone() {
+        let mut ring = RingBuffer::new(4);
+        let bytes = &[0, 1, 2, 3, 4, 5, 6];
+        ring.add(&bytes[0..4]);
+
+        let cloned_ring = ring.clone();
+        assert_eq!(cloned_ring, &bytes[0..4]);
+
+        ring.add(&bytes[4..5]);
+        let cloned_ring = ring.clone();
+        assert_eq!(cloned_ring, vec![1, 2, 3, 4]);
+
+        ring.add(&bytes[5..]);
+        let cloned_ring = ring.clone();
+        assert_eq!(cloned_ring, vec![3, 4, 5, 6]);
     }
 }
