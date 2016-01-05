@@ -114,7 +114,7 @@ enum WatcherState {
     Connecting,
     Disconnecting,
     MainMenu,
-    Watching,
+    Watching(Token),
 }
 
 enum WatcherAction {
@@ -200,7 +200,7 @@ impl Watcher {
             let each_byte = 0..num_bytes;
             for (_offset, byte) in each_byte.zip(self.input_buffer.iter()) {
                 match self.state {
-                    WatcherState::Watching => {
+                    WatcherState::Watching(_) => {
                         // Pressing 'q' while watching returns the watcher to the main menu.
                         if *byte == b'q' {
                             // This will reset the state back to the main menu.
@@ -647,7 +647,7 @@ impl Termcastd {
                         }
                         let watcherlite = watcherlite.unwrap();
                         caster.add_watcher(watcherlite);
-                        watcher.state = WatcherState::Watching;
+                        watcher.state = WatcherState::Watching(caster.token);
                     },
                     WatcherAction::StopWatching => {
                         watcher.state = WatcherState::MainMenu;
