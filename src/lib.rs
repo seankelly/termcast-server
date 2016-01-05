@@ -649,7 +649,10 @@ impl Termcastd {
                         caster.add_watcher(watcherlite);
                         watcher.state = WatcherState::Watching;
                     },
-                    WatcherAction::StopWatching => { },
+                    WatcherAction::StopWatching => {
+                        watcher.state = WatcherState::MainMenu;
+                        watcher.send_menu(&menu_view);
+                    },
                     WatcherAction::Exit => {
                         return Ok(WatcherAction::Exit);
                     },
