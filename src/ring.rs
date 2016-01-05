@@ -57,7 +57,7 @@ impl RingBuffer {
     pub fn iter(&self) -> Iter {
         // If the buffer length is less than the size then have not wrapped around yet so no offset
         // is necessary. If it has wrapped then need to start at the next byte to overwrite.
-        let offset = if self.buffer.len() < self.size { 0 } else { self.index };
+        let offset = self.get_offset();
         Iter {
             index: 0,
             offset: offset,
@@ -73,6 +73,10 @@ impl RingBuffer {
     pub fn clear(&mut self) {
         self.buffer.clear();
         self.index = 0;
+    }
+
+    fn get_offset(&self) -> usize {
+        if self.buffer.len() < self.size { 0 } else { self.index }
     }
 }
 
