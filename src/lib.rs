@@ -187,6 +187,11 @@ impl MenuView {
             return (menu, Some(actual_offset));
         }
     }
+
+    fn get_offset_token(&self, offset: usize) -> Option<Token> {
+        self.caster_entries.get(offset)
+                           .map(|entry| entry.token)
+    }
 }
 
 impl Watcher {
@@ -383,6 +388,19 @@ impl Caster {
         else {
             None
         }
+    }
+
+    fn send_buffer(&self, watcher: &mut WatcherLite) -> Result<usize, Error> {
+        let cast_buffer = self.cast_buffer.clone();
+        watcher.sock.write(&cast_buffer)
+    }
+
+    fn add_watcher(&mut self, mut watcher: WatcherLite) -> Result<(), Error> {
+        try!(watcher.sock.write(term::clear_screen().as_bytes()));
+        try!(watcher.sock.write(term::reset_cursor().as_bytes()));
+        try!(self.send_buffer(&mut watcher));
+        self.watchers.push(watcher);
+        Ok(())
     }
 }
 
@@ -609,7 +627,28 @@ impl Termcastd {
                     // The watcher returns the overall offset. Check that offset points to a valid
                     // caster. If it does, move the watcher to watch that caster. If it does not,
                     // refresh the menu for that watcher.
-                    WatcherAction::Watch(offset) => {},
+                    WatcherAction::Watch(offset) => {
+                        let caster_token = menu_view.get_offset_token(offset);
+                        if caster_token.is_none() {
+                            watcher.send_menu(&menu_view);
+                            continue;
+                        }
+                        let caster = self.casters.get_mut(&caster_token.unwrap());
+                        if caster.is_none() {
+                            // Huh...
+                            // TODO: Add log statement here.
+                            watcher.send_menu(&menu_view);
+                            continue;
+                        }
+                        let caster = caster.unwrap();
+                        let watcherlite = watcher.caster_copy();
+                        if watcherlite.is_err() {
+                            watcher.send_menu(&menu_view);
+                            continue;
+                        }
+                        let watcherlite = watcherlite.unwrap();
+                        caster.add_watcher(watcherlite);
+                    },
                     WatcherAction::StopWatching => { },
                     WatcherAction::Exit => {
                         return Ok(WatcherAction::Exit);
