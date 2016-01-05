@@ -81,7 +81,6 @@ impl<'a> Iterator for Iter<'a> {
 
     fn next(&mut self) -> Option<u8> {
         if self.index < self.size {
-            println!("{} {} ({})", self.index, self.offset, self.size);
             let index = (self.index + self.offset) % self.size;
             /*
             let index = if self.index + self.offset < self.size {
