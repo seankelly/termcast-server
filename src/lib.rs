@@ -204,7 +204,6 @@ impl Watcher {
                         // Pressing 'q' while watching returns the watcher to the main menu.
                         if *byte == b'q' {
                             // This will reset the state back to the main menu.
-                            self.state = WatcherState::MainMenu;
                             return WatcherAction::StopWatching;
                         }
                     },
@@ -648,6 +647,7 @@ impl Termcastd {
                         }
                         let watcherlite = watcherlite.unwrap();
                         caster.add_watcher(watcherlite);
+                        watcher.state = WatcherState::Watching;
                     },
                     WatcherAction::StopWatching => { },
                     WatcherAction::Exit => {
