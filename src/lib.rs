@@ -44,6 +44,7 @@ struct Caster {
 }
 
 struct CasterMenuEntry {
+    token: Token,
     name: String,
     num_watchers: usize,
     connected: DateTime<UTC>,
@@ -372,6 +373,7 @@ impl Caster {
     fn menu_entry(&self) -> Option<CasterMenuEntry> {
         if let Some(ref name) = self.name {
             Some(CasterMenuEntry {
+                token: self.token,
                 name: name.clone(),
                 num_watchers: self.watchers.len(),
                 connected: self.connected,
