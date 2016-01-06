@@ -659,14 +659,14 @@ impl Termcastd {
                     WatcherAction::StopWatching => {
                         if let WatcherState::Watching(caster_token) = watcher.state {
                             watcher.state = WatcherState::MainMenu;
-                            let caster = self.casters.get_mut(&caster_token);
-                            if caster.is_none() {
+                            if let Some(caster) = self.casters.get_mut(&caster_token) {
+                                caster.remove_watcher(watcher.token);
+                            }
+                            else {
                                 // Huh...
                                 // TODO: Add log statement here.
                                 continue;
                             }
-                            let caster = caster.unwrap();
-                            caster.remove_watcher(watcher.token);
                             // FIXME: This is a now stale menu view.
                             watcher.send_menu(&menu_view);
                         }
