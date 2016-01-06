@@ -319,7 +319,7 @@ impl Caster {
         }
 
         // Try to find a newline as that marks the end of the opening message.
-        if let Some(newline_idx) = auth_buffer.iter().position(|b| *b == 10) {
+        if let Some(newline_idx) = auth_buffer.iter().position(|b| *b == b'\n') {
             // Check for a single trailing \r and skip that too.
             let eol_idx = if newline_idx > 0 && auth_buffer[newline_idx-1] == b'\r' {
                 newline_idx - 1
