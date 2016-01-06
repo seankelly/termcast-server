@@ -401,6 +401,13 @@ impl Caster {
         self.watchers.push(watcher);
         Ok(())
     }
+
+    fn remove_watcher(&mut self, token: Token) {
+        let watcher_idx = self.watchers.iter().position(|w| w.token == token);
+        if let Some(idx) = watcher_idx {
+            self.watchers.remove(idx);
+        }
+    }
 }
 
 impl Termcastd {
@@ -650,8 +657,19 @@ impl Termcastd {
                         watcher.state = WatcherState::Watching(caster.token);
                     },
                     WatcherAction::StopWatching => {
-                        watcher.state = WatcherState::MainMenu;
-                        watcher.send_menu(&menu_view);
+                        if let WatcherState::Watching(caster_token) = watcher.state {
+                            watcher.state = WatcherState::MainMenu;
+                            let caster = self.casters.get_mut(&caster_token);
+                            if caster.is_none() {
+                                // Huh...
+                                // TODO: Add log statement here.
+                                continue;
+                            }
+                            let caster = caster.unwrap();
+                            caster.remove_watcher(watcher.token);
+                            // FIXME: This is a now stale menu view.
+                            watcher.send_menu(&menu_view);
+                        }
                     },
                     WatcherAction::Exit => {
                         return Ok(WatcherAction::Exit);
