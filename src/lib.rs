@@ -78,7 +78,6 @@ struct Termcastd {
     caster_auth: CasterAuth,
     next_token_id: usize,
     number_watching: u32,
-    number_casting: u32,
 }
 
 pub struct TermcastServer {
@@ -428,7 +427,6 @@ impl Termcastd {
             watchers: HashMap::new(),
             next_token_id: 2,
             number_watching: 0,
-            number_casting: 0,
         }
     }
 
@@ -459,7 +457,6 @@ impl Termcastd {
                         {
                             let caster = caster_entry.get();
                             let res = event_loop.deregister(&caster.sock);
-                            self.number_casting -= 1;
                             let channel = event_loop.channel();
                             // To not have to do a mutable borrow, send a message to
                             // reset these watchers back to the main menu. Everything
@@ -512,7 +509,6 @@ impl Termcastd {
                     PollOpt::edge(),
                 );
                 if res.is_ok() {
-                    self.number_casting += 1;
                     let client = Client::Caster;
                     self.clients.insert(token, client);
                     self.casters.insert(token, caster);
