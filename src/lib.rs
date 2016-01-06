@@ -260,22 +260,29 @@ impl Watcher {
 impl Caster {
     fn input(&mut self, caster_auth: &mut CasterAuth) -> Result<(), ()> {
         let mut bytes_received = [0u8; 1024];
-        while let Ok(_num_bytes) = self.sock.read(&mut bytes_received) {
-            // If a name is set then all bytes go straight to the watchers.
-            if self.name.is_some() {
-                self.relay_input(&bytes_received);
-            }
-            else {
-                let auth = self.handle_auth(&bytes_received, caster_auth);
-                match auth {
-                    Ok((offset, name)) => {
-                        self.name = Some(name);
-                        self.relay_input(&bytes_received[offset..]);
-                    },
-                    // Not enough data sent so try again later.
-                    Err(AuthResults::TryAgain) => {},
-                    Err(_) => return Err(()),
-                }
+        loop {
+            match self.sock.read(&mut bytes_received) {
+                Ok(_num_bytes) => {
+                    // If a name is set then all bytes go straight to the watchers.
+                    if self.name.is_some() {
+                        self.relay_input(&bytes_received);
+                    }
+                    else {
+                        let auth = self.handle_auth(&bytes_received, caster_auth);
+                        match auth {
+                            Ok((offset, name)) => {
+                                self.name = Some(name);
+                                self.relay_input(&bytes_received[offset..]);
+                            },
+                            // Not enough data sent so try again later.
+                            Err(AuthResults::TryAgain) => {},
+                            Err(_) => return Err(()),
+                        }
+                    }
+                },
+                Err(_e) => {
+                    break;
+                },
             }
         }
 
