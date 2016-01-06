@@ -77,7 +77,6 @@ struct Termcastd {
     casters: HashMap<Token, Caster>,
     caster_auth: CasterAuth,
     next_token_id: usize,
-    number_watching: u32,
 }
 
 pub struct TermcastServer {
@@ -426,7 +425,6 @@ impl Termcastd {
             caster_auth: CasterAuth::new(),
             watchers: HashMap::new(),
             next_token_id: 2,
-            number_watching: 0,
         }
     }
 
@@ -475,7 +473,6 @@ impl Termcastd {
                             let watcher = watcher_entry.get();
                             let res = event_loop.deregister(&watcher.sock);
                         }
-                        self.number_watching -= 1;
                         watcher_entry.remove();
                     }
                 },
@@ -573,8 +570,6 @@ impl Termcastd {
                     EventSet::all(),
                     PollOpt::edge(),
                 ));
-
-                self.number_watching += 1;
 
                 self.clients.insert(token, Client::Watcher);
                 self.watchers.insert(token, watcher);
