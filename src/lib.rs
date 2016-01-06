@@ -320,7 +320,14 @@ impl Caster {
 
         // Try to find a newline as that marks the end of the opening message.
         if let Some(newline_idx) = auth_buffer.iter().position(|b| *b == 10) {
-            if let Ok(input) = str::from_utf8(&auth_buffer[..newline_idx]) {
+            // Check for a single trailing \r and skip that too.
+            let eol_idx = if newline_idx > 0 && auth_buffer[newline_idx-1] == b'\r' {
+                newline_idx - 1
+            }
+            else {
+                newline_idx
+            };
+            if let Ok(input) = str::from_utf8(&auth_buffer[..eol_idx]) {
                 let parts: Vec<&str> = input.splitn(3, ' ').collect();
 
                 if parts.len() < 2 {
