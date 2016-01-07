@@ -1,4 +1,3 @@
-
 pub struct RingBuffer {
     index: usize,
     size: usize,
