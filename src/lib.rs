@@ -264,6 +264,7 @@ impl Caster {
         loop {
             match self.sock.read(&mut bytes_received) {
                 Ok(_num_bytes) => {
+                    self.last_byte_received = UTC::now();
                     // If a name is set then all bytes go straight to the watchers.
                     if self.name.is_some() {
                         self.relay_input(&bytes_received);
