@@ -314,14 +314,12 @@ impl Caster {
             return Err(AuthResults::TooLong);
         }
 
-        for el in self.cast_buffer.iter().enumerate() {
-            let (idx, byte) = el;
+        for (idx, byte) in self.cast_buffer.iter().enumerate() {
             auth_buffer[idx] = byte;
         }
 
         let cb_len = self.cast_buffer.len();
-        for el in raw_input.iter().enumerate() {
-            let (idx, byte) = el;
+        for (idx, byte) in raw_input.iter().enumerate() {
             auth_buffer[idx+cb_len] = *byte;
         }
 
