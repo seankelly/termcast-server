@@ -1,10 +1,9 @@
 
-use chrono::{DateTime, TimeZone, UTC};
+use chrono::{DateTime, UTC};
 
 /// Format the duration between "now" and "then" into a relative time. A duration of over 30 days
 /// will be rendered as the Y-m-d HH:MM; from 1 to 30 days will be rendered as Nd HH:MM:SS; under 1
 /// day will be rendered as HH:MM:SS.
-//pub fn relative_duration_format<T: TimeZone>(now: &DateTime<T>, then: &DateTime<T>) -> String {
 pub fn relative_duration_format(now: &DateTime<UTC>, then: &DateTime<UTC>) -> String {
     let dur = *now - *then;
     match dur.num_days() {
