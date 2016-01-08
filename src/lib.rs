@@ -6,10 +6,11 @@ extern crate log;
 pub mod config;
 
 mod auth;
+mod duration;
 mod ring;
 mod term;
 
-use chrono::{DateTime, Duration, UTC};
+use chrono::{DateTime, UTC};
 use mio::*;
 use std::io::{Error, ErrorKind};
 use std::io::Read;
@@ -21,6 +22,7 @@ use std::net::SocketAddr;
 use std::str;
 
 use auth::CasterAuth;
+use duration::relative_duration_format;
 use config::TermcastConfig;
 use ring::RingBuffer;
 
@@ -127,9 +129,10 @@ impl MenuView {
     fn render(&self, offset: usize) -> (String, Option<usize>) {
         fn caster_menu_entry(now: &DateTime<UTC>, choice: &'static str,
                              caster: &CasterMenuEntry) -> String {
-            format!(" {}) {} (idle ???, connected {}, {} watching)\r\n",
+            format!(" {}) {} (idle {}, connected {}, {} watching)\r\n",
                     choice, caster.name,
-                    caster.connected.format("%F %T"),
+                    relative_duration_format(&now, &caster.last_byte_received),
+                    relative_duration_format(&now, &caster.connected),
                     caster.num_watchers)
         }
 
