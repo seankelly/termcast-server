@@ -325,6 +325,8 @@ impl Caster {
             auth_buffer[idx+cb_len] = *byte;
         }
 
+        let auth_len = cb_len + raw_input.len();
+
         // Try to find a newline as that marks the end of the opening message.
         if let Some(newline_idx) = auth_buffer.iter().position(|b| *b == b'\n') {
             // Check for a single trailing \r and skip that too.
@@ -363,7 +365,7 @@ impl Caster {
                     // cast_buffer to contain those bytes.
                     self.cast_buffer.clear();
                     let cast_byte_idx = newline_idx + 1;
-                    let offset = if cast_byte_idx < auth_buffer.len() {
+                    let offset = if cast_byte_idx < auth_len {
                         // Extra bytes left in the buffer. Need to return the index into raw_input
                         // so the calling function can relay those bytes.
                         cast_byte_idx - cb_len
