@@ -265,18 +265,18 @@ impl Caster {
         let mut bytes_received = [0u8; 1024];
         loop {
             match self.sock.read(&mut bytes_received) {
-                Ok(_num_bytes) => {
+                Ok(num_bytes) => {
                     self.last_byte_received = UTC::now();
                     // If a name is set then all bytes go straight to the watchers.
                     if self.name.is_some() {
-                        self.relay_input(&bytes_received);
+                        self.relay_input(&bytes_received[..num_bytes]);
                     }
                     else {
-                        let auth = self.handle_auth(&bytes_received, caster_auth);
+                        let auth = self.handle_auth(&bytes_received[..num_bytes], caster_auth);
                         match auth {
                             Ok((offset, name)) => {
                                 self.name = Some(name);
-                                self.relay_input(&bytes_received[offset..]);
+                                self.relay_input(&bytes_received[offset..num_bytes]);
                             },
                             // Not enough data sent so try again later.
                             Err(AuthResults::TryAgain) => {},
@@ -364,12 +364,12 @@ impl Caster {
                     self.cast_buffer.clear();
                     let cast_byte_idx = newline_idx + 1;
                     let offset = if cast_byte_idx < auth_buffer.len() {
-                        self.cast_buffer.add(&auth_buffer[cast_byte_idx..]);
                         // Extra bytes left in the buffer. Need to return the index into raw_input
                         // so the calling function can relay those bytes.
                         cast_byte_idx - cb_len
                     }
                     else {
+                        // TODO: Is this the right value to return?
                         0
                     };
                     return Ok((offset, String::from(name)));
