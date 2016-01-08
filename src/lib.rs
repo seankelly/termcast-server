@@ -49,6 +49,7 @@ struct CasterMenuEntry {
     token: Token,
     name: String,
     num_watchers: usize,
+    buffer_size: usize,
     connected: DateTime<UTC>,
     last_byte_received: DateTime<UTC>,
 }
@@ -129,11 +130,12 @@ impl MenuView {
     fn render(&self, offset: usize) -> (String, Option<usize>) {
         fn caster_menu_entry(now: &DateTime<UTC>, choice: &'static str,
                              caster: &CasterMenuEntry) -> String {
-            format!(" {}) {} (idle {}, connected {}, {} watching)\r\n",
+            format!(" {}) {} (idle {}, connected {}, {} watching, {} bytes)\r\n",
                     choice, caster.name,
                     relative_duration_format(&now, &caster.last_byte_received),
                     relative_duration_format(&now, &caster.connected),
-                    caster.num_watchers)
+                    caster.num_watchers,
+                    caster.buffer_size)
         }
 
         let num_casters = self.caster_entries.len();
@@ -397,6 +399,7 @@ impl Caster {
                 token: self.token,
                 name: name.clone(),
                 num_watchers: self.watchers.len(),
+                buffer_size: self.cast_buffer.len(),
                 connected: self.connected,
                 last_byte_received: self.last_byte_received,
             })
