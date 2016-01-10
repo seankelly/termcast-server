@@ -363,13 +363,12 @@ impl Caster {
                     // cast_buffer to contain those bytes.
                     self.cast_buffer.clear();
                     let cast_byte_idx = newline_idx + 1;
-                    let offset = if cast_byte_idx < auth_len {
-                        // Extra bytes left in the buffer. Need to return the index into raw_input
-                        // so the calling function can relay those bytes.
+                    let offset = if cast_byte_idx > cb_len {
+                        // Possibly extra bytes left in the buffer. Need to return the index into
+                        // raw_input so the calling function can relay those bytes.
                         cast_byte_idx - cb_len
                     }
                     else {
-                        // TODO: Is this the right value to return?
                         0
                     };
                     return Ok((offset, String::from(name)));
