@@ -18,18 +18,16 @@ use mio::*;
 use std::io::{Error, ErrorKind};
 use std::io::Read;
 use std::io::Write;
-use mio::tcp::{TcpListener, TcpStream};
+use mio::tcp::TcpListener;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::net::SocketAddr;
-use std::str;
 
 use auth::CasterAuth;
 use caster::{Caster, CasterMenuEntry};
 use duration::relative_duration_format;
 use config::TermcastConfig;
-use ring::RingBuffer;
-use watcher::{Watcher, WatcherLite, WatcherAction, WatcherState};
+use watcher::{Watcher, WatcherAction, WatcherState};
 
 
 const CASTER: Token = Token(0);
