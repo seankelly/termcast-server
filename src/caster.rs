@@ -6,11 +6,11 @@ use std::io::{Error, ErrorKind};
 use std::io::Read;
 use std::io::Write;
 use std::str;
-use super::WatcherLite;
 
 use auth::CasterAuth;
 use ring::RingBuffer;
 use term;
+use watcher::WatcherLite;
 
 pub struct Caster {
     sock: TcpStream,
@@ -105,15 +105,15 @@ impl Caster {
     }
 
     pub fn add_watcher(&mut self, mut watcher: WatcherLite) -> Result<(), Error> {
-        try!(watcher.sock.write(term::clear_screen().as_bytes()));
-        try!(watcher.sock.write(term::reset_cursor().as_bytes()));
+        try!(watcher.write(term::clear_screen().as_bytes()));
+        try!(watcher.write(term::reset_cursor().as_bytes()));
         try!(self.send_buffer(&mut watcher));
         self.watchers.push(watcher);
         Ok(())
     }
 
     pub fn remove_watcher(&mut self, token: Token) {
-        let watcher_idx = self.watchers.iter().position(|w| w.token == token);
+        let watcher_idx = self.watchers.iter().position(|w| w.token() == token);
         if let Some(idx) = watcher_idx {
             self.watchers.remove(idx);
         }
@@ -223,7 +223,7 @@ impl Caster {
     fn relay_input(&mut self, input: &[u8]) {
         self.cast_buffer.add(&input);
         for watcher in self.watchers.iter_mut() {
-            let res = watcher.sock.write(&input);
+            let res = watcher.write(&input);
             // Need to notify the watcher has an error.
             if res.is_err() {
             }
@@ -232,7 +232,7 @@ impl Caster {
 
     fn send_buffer(&self, watcher: &mut WatcherLite) -> Result<usize, Error> {
         let cast_buffer = self.cast_buffer.clone();
-        watcher.sock.write(&cast_buffer)
+        watcher.write(&cast_buffer)
     }
 }
 

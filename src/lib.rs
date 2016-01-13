@@ -11,6 +11,7 @@ mod caster;
 mod duration;
 mod ring;
 mod term;
+mod watcher;
 
 use chrono::{DateTime, UTC};
 use mio::*;
@@ -28,6 +29,7 @@ use caster::{Caster, CasterMenuEntry};
 use duration::relative_duration_format;
 use config::TermcastConfig;
 use ring::RingBuffer;
+use watcher::{Watcher, WatcherLite, WatcherAction, WatcherState};
 
 
 const CASTER: Token = Token(0);
@@ -41,19 +43,6 @@ const MENU_CHOICES: [&'static str; 16] = ["a", "b", "c", "d", "e", "f", "g",
 struct MenuView {
     caster_entries: Vec<CasterMenuEntry>,
     total_watchers: usize,
-}
-
-struct Watcher {
-    offset: usize,
-    sock: TcpStream,
-    input_buffer: [u8; 128],
-    token: Token,
-    state: WatcherState,
-}
-
-struct WatcherLite {
-    sock: TcpStream,
-    token: Token,
 }
 
 struct Termcastd {
@@ -83,20 +72,6 @@ pub enum TermcastdMessage {
 enum Client {
     Caster,
     Watcher,
-}
-
-enum WatcherState {
-    Connecting,
-    Disconnecting,
-    MainMenu,
-    Watching(Token),
-}
-
-enum WatcherAction {
-    Exit,
-    Nothing,
-    StopWatching,
-    Watch(usize),
 }
 
 
@@ -171,69 +146,6 @@ impl MenuView {
     }
 }
 
-impl Watcher {
-    fn parse_input(&mut self, menu_view: &MenuView) -> WatcherAction {
-        while let Ok(num_bytes) = self.sock.read(&mut self.input_buffer) {
-            let each_byte = 0..num_bytes;
-            for (_offset, byte) in each_byte.zip(self.input_buffer.iter()) {
-                match self.state {
-                    WatcherState::Watching(_) => {
-                        // Pressing 'q' while watching returns the watcher to the main menu.
-                        if *byte == b'q' {
-                            // This will reset the state back to the main menu.
-                            return WatcherAction::StopWatching;
-                        }
-                    },
-                    WatcherState::MainMenu => {
-                        match *byte {
-                            b'a'...b'p' => {
-                                let page_offset = (*byte - b'a') as usize;
-                                let caster_offset = self.offset + page_offset;
-                                return WatcherAction::Watch(caster_offset);
-                            }
-                            b'q' => {
-                                self.state = WatcherState::Disconnecting;
-                                return WatcherAction::Exit;
-                            },
-                            // Any other character, refresh the menu.
-                            _ => {
-                                // TODO: Replace rest of this block with the following line.
-                                //self.send_menu(&menu_view);
-                                let (menu, fixed_offset) = menu_view.render(self.offset);
-                                if let Some(offset) = fixed_offset {
-                                    self.offset = offset;
-                                }
-                                self.sock.write(&menu.as_bytes());
-                            },
-                        }
-                    },
-                    WatcherState::Connecting => {},
-                    WatcherState::Disconnecting => { return WatcherAction::Nothing },
-                }
-            }
-        }
-
-        return WatcherAction::Nothing;
-    }
-
-    fn send_menu(&mut self, menu_view: &MenuView) -> Result<usize, Error> {
-        let (menu, fixed_offset) = menu_view.render(self.offset);
-        if let Some(offset) = fixed_offset {
-            self.offset = offset;
-        }
-        self.sock.write(&menu.as_bytes())
-    }
-
-    fn caster_copy(&mut self) -> Result<WatcherLite, Error> {
-        let socket = try!(self.sock.try_clone());
-        let lite = WatcherLite {
-            sock: socket,
-            token: self.token,
-        };
-        Ok(lite)
-    }
-}
-
 impl Termcastd {
     fn new(listen_caster: TcpListener, listen_watcher: TcpListener) -> Self {
         Termcastd {
@@ -280,7 +192,7 @@ impl Termcastd {
                             // will be dropped after the end of the match when the
                             // entry is removed.
                             for watcher in caster.each_watcher() {
-                                let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token));
+                                let res = channel.send(TermcastdMessage::CasterDisconnected(watcher.token()));
                             }
                         }
                         caster_entry.remove();
@@ -290,7 +202,7 @@ impl Termcastd {
                     if let Entry::Occupied(watcher_entry) = self.watchers.entry(token) {
                         {
                             let watcher = watcher_entry.get();
-                            let res = event_loop.deregister(&watcher.sock);
+                            let res = event_loop.deregister(watcher.sock());
                         }
                         watcher_entry.remove();
                     }
@@ -347,7 +259,7 @@ impl Termcastd {
                 // Assemble all of the watchers, stuff them in a vector, and send it up to have
                 // those watchers reset to the main menu.
                 let watchers = caster.each_watcher()
-                    .map(|w| w.token).collect();
+                    .map(|w| w.token()).collect();
 
                 event_loop.deregister(caster.socket());
 
@@ -367,16 +279,10 @@ impl Termcastd {
         match self.listen_watcher.accept() {
             Ok(Some(sock)) => {
                 let token = self.next_token();
-                let watcher = Watcher {
-                    offset: 0,
-                    sock: sock,
-                    input_buffer: [0; 128],
-                    token: token,
-                    state: WatcherState::Connecting,
-                };
+                let watcher = Watcher::new(token, sock);
 
                 try!(event_loop.register_opt(
-                    &watcher.sock,
+                    watcher.sock(),
                     token,
                     EventSet::all(),
                     PollOpt::edge(),
@@ -390,21 +296,21 @@ impl Termcastd {
                 let watcher_init = self.watchers.get_mut(&token)
                     .ok_or(Error::new(ErrorKind::NotFound, ""))
                     .and_then(|w| {
-                        w.sock.write(&term::disable_linemode())
-                            .map_err(|_err| event_loop.deregister(&w.sock))
+                        w.write(&term::disable_linemode())
+                            .map_err(|_err| event_loop.deregister(w.sock()))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     })
                     .and_then(|w| {
-                        w.sock.write(&term::disable_local_echo())
-                            .map_err(|_err| event_loop.deregister(&w.sock))
+                        w.write(&term::disable_local_echo())
+                            .map_err(|_err| event_loop.deregister(w.sock()))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     })
                     .and_then(|w| {
                         w.state = WatcherState::MainMenu;
                         w.send_menu(&menu_view)
-                            .map_err(|_err| event_loop.deregister(&w.sock))
+                            .map_err(|_err| event_loop.deregister(w.sock()))
                             .map_err(|_| Error::new(ErrorKind::Other, ""))
                             .map(|_| w)
                     });
@@ -469,7 +375,7 @@ impl Termcastd {
                         if let WatcherState::Watching(caster_token) = watcher.state {
                             watcher.state = WatcherState::MainMenu;
                             if let Some(caster) = self.casters.get_mut(&caster_token) {
-                                caster.remove_watcher(watcher.token);
+                                caster.remove_watcher(watcher.token());
                             }
                             else {
                                 // Huh...
