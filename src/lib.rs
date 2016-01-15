@@ -118,7 +118,7 @@ impl MenuView {
         let caster_choices = self.caster_entries.iter()
                     .skip(offset)
                     .take(CASTERS_PER_SCREEN);
-        for c in caster_choices.zip(MENU_CHOICES.iter()) {
+        for c in caster_choices.zip(&MENU_CHOICES) {
             let (caster, choice) = c;
             menu.push_str(&caster_menu_entry(&now, choice, caster));
         }
@@ -240,7 +240,7 @@ impl Termcastd {
     /// main menu.
     fn read_caster(&mut self, event_loop: &mut EventLoop<Termcastd>, token: Token) {
         if let Err(watchers) = self.caster_input(event_loop, token) {
-            for watcher in watchers.iter() {
+            for watcher in &watchers {
                 self.reset_watcher(*watcher);
             }
 
