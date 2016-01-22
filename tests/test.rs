@@ -20,6 +20,7 @@ fn listen() {
     let config = TermcastConfig {
         caster: "127.0.0.1:0".parse().unwrap(),
         watcher: "127.0.0.1:0".parse().unwrap(),
+        motd: None,
     };
 
     assert!(TermcastServer::new(config).is_ok(), "Can bind both ports.");
@@ -33,6 +34,7 @@ fn bind_taken() {
     let config = TermcastConfig {
         caster: l.local_addr().unwrap(),
         watcher: "127.0.0.1:0".parse().unwrap(),
+        motd: None,
     };
 
     let tc = TermcastServer::new(config);
@@ -158,6 +160,7 @@ fn make_termcastd() -> TermcastServer {
     let config = TermcastConfig {
         caster: "127.0.0.1:0".parse().unwrap(),
         watcher: "127.0.0.1:0".parse().unwrap(),
+        motd: None,
     };
 
     TermcastServer::new(config).unwrap()
