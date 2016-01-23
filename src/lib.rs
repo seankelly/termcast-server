@@ -39,6 +39,7 @@ const MENU_CHOICES: [&'static str; 16] = ["a", "b", "c", "d", "e", "f", "g",
 
 
 struct MenuView {
+    motd: String,
     caster_entries: Vec<CasterMenuEntry>,
     total_watchers: usize,
 }
@@ -51,6 +52,7 @@ struct Termcastd {
     casters: HashMap<Token, Caster>,
     caster_auth: CasterAuth,
     next_token_id: usize,
+    motd: String,
 }
 
 pub struct TermcastServer {
@@ -154,6 +156,7 @@ impl Termcastd {
             caster_auth: CasterAuth::new(),
             watchers: HashMap::new(),
             next_token_id: 2,
+            motd: String::from(""),
         }
     }
 
@@ -168,6 +171,7 @@ impl Termcastd {
             .filter_map(|c| c.menu_entry());
 
         let view = MenuView {
+            motd: self.motd.clone(),
             caster_entries: valid_casters.collect(),
             total_watchers: self.watchers.len(),
         };
