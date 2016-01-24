@@ -1,3 +1,4 @@
+extern crate getopts;
 extern crate termcastd;
 
 use termcastd::TermcastServer;
