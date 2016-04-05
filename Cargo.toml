@@ -1,6 +1,6 @@
 [package]
 name = "termcastd"
-version = "0.3.1"
+version = "0.3.2"
 authors = ["Sean Kelly <code@katron.org>"]
 
 [dependencies]
