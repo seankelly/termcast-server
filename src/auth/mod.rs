@@ -1,12 +1,10 @@
-extern crate crypto;
-
-use self::crypto::digest::Digest;
-use self::crypto::sha2::Sha256;
 use std::collections::HashMap;
+
+use sodiumoxide::crypto::pwhash;
 
 
 pub struct CasterAuth {
-    logins: HashMap<String, [u8; 32]>,
+    logins: HashMap<String, pwhash::HashedPassword>,
 }
 
 impl CasterAuth {
@@ -22,30 +20,18 @@ impl CasterAuth {
     pub fn login(&mut self, name: &str, password: &str) -> Result<(), ()> {
         let name = String::from(name);
 
-        // Hash the password to get everything to the same length.
-        let mut hashed_password = [0; 32];
-        CasterAuth::hash_password(password, &mut hashed_password);
-        let hashed = hashed_password.clone();
+        let password_bytes = password.as_bytes();
+        let pwh = try!(pwhash::pwhash(password_bytes,
+                                      pwhash::OPSLIMIT_INTERACTIVE,
+                                      pwhash::MEMLIMIT_INTERACTIVE));
 
-        let hash_entry = self.logins.entry(name).or_insert(hashed);
-        let mut diff = 0;
-        for bytes in hashed_password.iter().zip(hash_entry) {
-            let (byte_input, byte_entry) = bytes;
-            diff |= *byte_input ^ *byte_entry;
-        }
-
-        if diff == 0 {
+        let pwhash_entry = self.logins.entry(name).or_insert(pwh);
+        if pwhash::pwhash_verify(&pwhash_entry, password_bytes) {
             Ok(())
         }
         else {
             Err(())
         }
-    }
-
-    fn hash_password(password: &str, output: &mut [u8]) {
-        let mut sha256 = Sha256::new();
-        sha256.input(password.as_bytes());
-        sha256.result(output);
     }
 }
 
