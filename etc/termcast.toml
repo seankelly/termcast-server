@@ -1,0 +1,3 @@
+[server]
+caster_listen = 127.0.0.1:31337
+watcher_listen = 127.0.0.1:2300
