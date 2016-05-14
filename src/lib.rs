@@ -4,6 +4,7 @@ extern crate mio;
 #[macro_use]
 extern crate log;
 extern crate sodiumoxide;
+extern crate toml;
 
 pub mod config;
 

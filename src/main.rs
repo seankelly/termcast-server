@@ -18,7 +18,12 @@ fn get_options() -> TermcastConfig {
     };
 
     let tc_config = match matches.opt_str("c") {
-        Some(_config_file) => { TermcastConfig::default() },
+        Some(config_file) => {
+            match TermcastConfig::from_config(&config_file) {
+                Ok(c) => c,
+                Err(_e) => TermcastConfig::default(),
+            }
+        },
         None => TermcastConfig::default(),
     };
 
