@@ -1,10 +1,8 @@
 use std::default::Default;
-use std::error::Error;
 use std::fs::File;
 use std::io;
 use std::io::Read;
 use std::net;
-use std::str;
 
 use toml;
 
