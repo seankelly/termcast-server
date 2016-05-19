@@ -18,7 +18,7 @@ pub struct TermcastConfig {
 #[derive(Debug)]
 pub enum ConfigError {
     Nothing,
-    Invalid(net::AddrParseError),
+    InvalidAddr(net::AddrParseError),
     Io(io::Error),
 }
 
@@ -60,7 +60,7 @@ fn get_option(toml_value: &toml::Value, option_name: &str) -> Option<String> {
 }
 
 fn parse_socketaddr(addr: String) -> Result<net::SocketAddr, ConfigError> {
-    addr.parse().map_err(ConfigError::Invalid)
+    addr.parse().map_err(ConfigError::InvalidAddr)
 }
 
 impl TermcastConfig {
@@ -78,7 +78,7 @@ impl TermcastConfig {
                         .and_then(parse_socketaddr);
             match c {
                 Ok(addr) => { config.caster = addr }
-                Err(ConfigError::Invalid(e)) => {
+                Err(ConfigError::InvalidAddr(e)) => {
                     println!("Invalid caster listen address: {}.", e);
                 }
                 Err(_) => { }
@@ -89,7 +89,7 @@ impl TermcastConfig {
                         .and_then(parse_socketaddr);
             match c {
                 Ok(addr) => { config.watcher = addr }
-                Err(ConfigError::Invalid(e)) => {
+                Err(ConfigError::InvalidAddr(e)) => {
                     println!("Invalid watcher listen address: {}.", e);
                 }
                 Err(_) => { }
