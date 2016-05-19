@@ -1,7 +1,8 @@
 use std::default::Default;
+use std::error::Error;
 use std::fs::File;
+use std::io;
 use std::io::Read;
-use std::io::Error as IoError;
 use std::net;
 use std::str;
 
@@ -15,9 +16,10 @@ pub struct TermcastConfig {
 
 
 #[derive(Debug)]
-enum ConfigError {
+pub enum ConfigError {
     Nothing,
     Invalid(net::AddrParseError),
+    Io(io::Error),
 }
 
 const CASTER_LISTEN: &'static str = "127.0.0.1:31337";
@@ -31,6 +33,12 @@ impl Default for TermcastConfig {
             watcher: WATCHER_LISTEN.parse().unwrap(),
             motd: MOTD,
         }
+    }
+}
+
+impl From<io::Error> for ConfigError {
+    fn from(err: io::Error) -> Self {
+        ConfigError::Io(err)
     }
 }
 
@@ -56,14 +64,13 @@ fn parse_socketaddr(addr: String) -> Result<net::SocketAddr, ConfigError> {
 }
 
 impl TermcastConfig {
-    pub fn from_config(config_file_path: &str) -> Result<Self, IoError> {
+    pub fn from_config(config_file_path: &str) -> Result<Self, ConfigError> {
         let mut config = TermcastConfig::default();
 
         let mut config_file = try!(File::open(&config_file_path));
-        let mut contents = Vec::new();
-        let _bytes_read = try!(config_file.read_to_end(&mut contents));
-        let contents_str = str::from_utf8(&contents).unwrap();
-        let mut parser = toml::Parser::new(&contents_str);
+        let mut contents = String::new();
+        try!(config_file.read_to_string(&mut contents));
+        let mut parser = toml::Parser::new(&contents);
         let options = parser.parse().unwrap();
         if let Some(server_config) = options.get("server") {
             let c = get_option(&server_config, "caster_listen")
