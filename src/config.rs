@@ -42,6 +42,12 @@ impl From<io::Error> for ConfigError {
     }
 }
 
+impl From<net::AddrParseError> for ConfigError {
+    fn from(err: net::AddrParseError) -> Self {
+        ConfigError::InvalidAddr(err)
+    }
+}
+
 fn get_option(toml_value: &toml::Value, option_name: &str) -> Option<String> {
     match toml_value {
         &toml::Value::Table(ref table) => {
