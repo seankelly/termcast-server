@@ -15,11 +15,13 @@ pub struct Watcher {
     token: Token,
 }
 
+#[derive(Debug)]
 pub struct WatcherLite {
     sock: TcpStream,
     token: Token,
 }
 
+#[derive(Debug)]
 pub enum WatcherState {
     Connecting,
     Disconnecting,
@@ -27,6 +29,7 @@ pub enum WatcherState {
     Watching(Token),
 }
 
+#[derive(Debug)]
 pub enum WatcherAction {
     Exit,
     Nothing,

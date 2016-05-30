@@ -12,6 +12,7 @@ use ring::RingBuffer;
 use term;
 use watcher::WatcherLite;
 
+#[derive(Debug)]
 pub struct Caster {
     sock: TcpStream,
     token: Token,
@@ -22,6 +23,7 @@ pub struct Caster {
     last_byte_received: DateTime<UTC>,
 }
 
+#[derive(Debug)]
 pub struct CasterMenuEntry {
     token: Token,
     name: String,
@@ -32,6 +34,7 @@ pub struct CasterMenuEntry {
 }
 
 
+#[derive(Debug)]
 enum AuthResults {
     InvalidLogin,
     InvalidName,

@@ -1,9 +1,11 @@
+#[derive(Debug)]
 pub struct RingBuffer {
     index: usize,
     size: usize,
     buffer: Vec<u8>,
 }
 
+#[derive(Debug)]
 pub struct Iter<'a> {
     index: usize,
     offset: usize,
